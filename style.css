@@ -1,0 +1,178 @@
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+    background-color: #f0f2f5;
+    color: #333;
+}
+
+.container {
+    text-align: center;
+    background-color: #fff;
+    padding: 40px;
+    border-radius: 10px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    width: 90%;
+    max-width: 600px;
+}
+
+h1 {
+    margin-top: 0;
+    color: #1c1c1e;
+}
+
+#card {
+    margin-top: 20px;
+}
+
+.question {
+    font-size: 3rem;
+    font-weight: bold;
+    margin-bottom: 20px;
+    color: #007aff;
+    min-height: 60px;
+}
+
+#answer-input {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    font-size: 1rem;
+    box-sizing: border-box;
+    text-align: center;
+}
+
+#answer-input:focus {
+    outline: none;
+    border-color: #007aff;
+    box-shadow: 0 0 0 2px rgba(0, 122, 255, 0.2);
+}
+
+#setup {
+    margin-bottom: 20px;
+}
+
+#word-list-input {
+    width: 100%;
+    box-sizing: border-box; /* Ensures padding doesn't add to the width */
+    padding: 10px;
+    font-size: 1rem;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    resize: vertical; /* Allow vertical resizing */
+    margin-bottom: 15px;
+}
+
+#feedback {
+    margin-top: 15px;
+    min-height: 24px;
+    font-size: 1.2rem;
+    font-weight: bold;
+}
+
+.correct {
+    color: #34c759;
+}
+
+.incorrect {
+    color: #ff3b30;
+}
+
+button {
+    background-color: #007aff;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+button:hover {
+    background-color: #005ecb;
+}
+
+button:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+}
+
+
+/* Styles for Terminate and Show Errors buttons */
+#terminate-button, #show-errors-button, #practice-errors-button {
+    background-color: #8e8e93; /* A neutral grey */
+    margin-top: 10px;
+}
+#start-button + #show-errors-button,
+#show-errors-button + #practice-errors-button {
+    margin-left: 10px;
+}
+
+#terminate-button:hover, #show-errors-button:hover {
+    background-color: #6d6d72;
+}
+
+#continue-button {
+    background-color: #34c759; /* Green for continue */
+    margin-top: 10px;
+    margin-right: 10px; /* Space between buttons */
+}
+
+#continue-button:hover {
+    background-color: #2ca349;
+}
+
+
+
+/* Modal Styles */
+.modal {
+    display: none; /* Hidden by default */
+    position: fixed; /* Stay in place */
+    z-index: 1; /* Sit on top */
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto; /* Enable scroll if needed */
+    background-color: rgba(0,0,0,0.5); /* Black w/ opacity */
+}
+
+.modal-content {
+    background-color: #fefefe;
+    margin: 15% auto; /* 15% from the top and centered */
+    padding: 20px;
+    border: 1px solid #888;
+    width: 80%;
+    max-width: 500px;
+    border-radius: 10px;
+    position: relative;
+    text-align: left;
+}
+
+.close-button {
+    color: #aaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+}
+
+.close-button:hover,
+.close-button:focus {
+    color: black;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+#modal-incorrect-list {
+    background-color: #f0f2f5;
+    border-radius: 5px;
+    padding: 10px;
+    margin-top: 10px;
+    max-height: 300px;
+    overflow-y: auto;
+}

@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>暗记程序</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>暗记程序</h1>
+
+        <div id="setup">
+            <h2>输入单词列表</h2>
+            <p>每行一个词条，格式为：<b>问题, 答案1, 答案2...</b>，例如：</p>
+            <p><code>武器,ぶき,buki</code></p>
+            <textarea id="word-list-input" rows="10">武器,ぶき,buki
+車,くるま,kuruma
+猫,ねこ,neko
+犬,いぬ,inu
+食べる,たべる,taberu
+飲む,のむ,nomu
+日本語,にほんご,nihongo,Japanese,Japanisch</textarea>
+            <button id="start-button">开始学习</button>
+            <button id="show-errors-button">查看错题</button>
+            <button id="practice-errors-button">练习错题</button>
+        </div>
+
+        <div id="card" style="display: none;">
+            <div id="question" class="question"></div>
+            <input type="text" id="answer-input" placeholder="输入答案后按回车" autocomplete="off">
+            <div id="feedback"></div>
+            <button id="continue-button" style="display: none;">继续</button>
+            <button id="terminate-button">终止测验</button>
+        </div>
+
+        <div id="summary" style="display: none;">
+            <h2>完成！</h2>
+            <p>正确: <span id="correct-count">0</span></p>
+            <p>错误: <span id="incorrect-count">0</span></p>
+            
+            <div id="incorrect-words-container" style="display: none;">
+                <h3>答错的单词 (方便复习)</h3>
+                <div id="incorrect-words-list"></div>
+            </div>
+
+            <button id="restart-button">重新开始</button>
+        </div>
+    </div>
+
+    <div id="error-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-button">&times;</span>
+            <h2>答错的单词记录</h2>
+            <div id="modal-incorrect-list"></div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
