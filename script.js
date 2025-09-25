@@ -133,6 +133,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (lowerCaseAnswers.includes(userAnswer)) {
             handleCorrectAnswer(currentWord);
             setTimeout(proceedToNextWord, 1500);
+            answerInput.blur();
         } else {
             handleIncorrectAnswer(currentWord);
             continueButton.style.display = 'inline-block';
@@ -222,6 +223,7 @@ document.addEventListener('DOMContentLoaded', () => {
     continueButton.addEventListener('click', proceedToNextWord);
     answerInput.addEventListener('keydown', (event) => {
         if (event.key === 'Enter') {
+            event.stopPropagation();
             checkAnswer();
         }
     });
