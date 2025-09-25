@@ -36,6 +36,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let isPracticeMode = false;
     let sessionIncorrectWords = [];
     const ALL_TIME_INCORRECT_KEY = 'allTimeIncorrectWords';
+    const WORD_LIST_STORAGE_KEY = 'wordListContent';
     let isChecking = false;
 
     // --- Game Flow Functions ---
@@ -43,6 +44,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // 1. Starts a normal game from the textarea
     function initializeGame() {
         const text = wordListInput.value;
+        localStorage.setItem(WORD_LIST_STORAGE_KEY, text);
+
         const parsedWords = text.trim().split('\n').map(line => {
             const parts = line.split(',').map(part => part.trim()).filter(part => part);
             if (parts.length === 0) return null;
@@ -168,6 +171,17 @@ document.addEventListener('DOMContentLoaded', () => {
         addWordToIncorrectList(word);
     }
 
+    function retryQuestion() {
+        isChecking = false;
+        feedbackEl.textContent = '';
+        feedbackEl.className = '';
+        answerInput.disabled = false;
+        answerInput.value = '';
+        continueButton.style.display = 'none';
+        tryAgainButton.style.display = 'none';
+        answerInput.focus();
+    }
+
     // --- LocalStorage Management ---
 
     function addWordToIncorrectList(word) {
@@ -182,6 +196,13 @@ document.addEventListener('DOMContentLoaded', () => {
         let incorrectWords = JSON.parse(localStorage.getItem(ALL_TIME_INCORRECT_KEY) || '[]');
         incorrectWords = incorrectWords.filter(w => w.question !== word.question);
         localStorage.setItem(ALL_TIME_INCORRECT_KEY, JSON.stringify(incorrectWords));
+    }
+
+    function loadWordListFromStorage() {
+        const savedWordList = localStorage.getItem(WORD_LIST_STORAGE_KEY);
+        if (savedWordList) {
+            wordListInput.value = savedWordList;
+        }
     }
 
     // --- UI and Utility Functions ---
@@ -241,10 +262,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     document.addEventListener('keydown', (event) => {
         if (event.key === 'Enter' && continueButton.style.display !== 'none') {
-            proceedToNextWord();
+            retryQuestion();
         }
     });
 
     // Initial check when the page loads
+    loadWordListFromStorage();
     checkIncorrectWordsStatus();
 });
