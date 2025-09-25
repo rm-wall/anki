@@ -36,6 +36,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let isPracticeMode = false;
     let sessionIncorrectWords = [];
     const ALL_TIME_INCORRECT_KEY = 'allTimeIncorrectWords';
+    let isChecking = false;
 
     // --- Game Flow Functions ---
 
@@ -118,9 +119,12 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Answer Checking ---
 
     function checkAnswer() {
+        if (isChecking) return;
+
         const userAnswer = answerInput.value.trim().toLowerCase();
         if (userAnswer === '') return;
 
+        isChecking = true;
         const currentWord = words[currentWordIndex];
         const lowerCaseAnswers = currentWord.answers.map(a => a.toLowerCase());
         
@@ -137,6 +141,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function proceedToNextWord() {
+        isChecking = false;
         currentWordIndex++;
         feedbackEl.textContent = '';
         feedbackEl.className = '';
@@ -229,6 +234,12 @@ document.addEventListener('DOMContentLoaded', () => {
     window.addEventListener('click', (event) => {
         if (event.target == errorModal) {
             errorModal.style.display = 'none';
+        }
+    });
+
+    document.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter' && continueButton.style.display !== 'none') {
+            proceedToNextWord();
         }
     });
 
