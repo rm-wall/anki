@@ -25,7 +25,7 @@ document.addEventListener('DOMContentLoaded', () => {
             incorrectWordsHeading: '答错的单词 (方便复习)',
             restartButton: '重新开始',
             errorModalHeading: '答错的单词记录',
-            correctFeedback: '正确!',
+            correctFeedback: '正确! 答案: {answers}',
             incorrectFeedback: '错误! 答案: {answers}',
             emptyListAlert: '单词列表为空或格式不正确。',
             noErrorsAlert: '没有错题可以练习！',
@@ -51,7 +51,7 @@ document.addEventListener('DOMContentLoaded', () => {
             incorrectWordsHeading: 'Incorrect Words (for review)',
             restartButton: 'Restart',
             errorModalHeading: 'Incorrect Word History',
-            correctFeedback: 'Correct!',
+            correctFeedback: 'Correct! The answer is: {answers}',
             incorrectFeedback: 'Incorrect! The answer is: {answers}',
             emptyListAlert: 'The word list is empty or formatted incorrectly.',
             noErrorsAlert: 'No incorrect words to practice!',
@@ -77,7 +77,7 @@ document.addEventListener('DOMContentLoaded', () => {
             incorrectWordsHeading: '間違った単語（復習用）',
             restartButton: '再開',
             errorModalHeading: '間違った単語の記録',
-            correctFeedback: '正解！',
+            correctFeedback: '正解！答えは: {answers}',
             incorrectFeedback: '不正解！答えは: {answers}',
             emptyListAlert: '単語リストが空か、形式が正しくありません。',
             noErrorsAlert: '練習する間違いはありません！',
@@ -246,7 +246,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function handleCorrectAnswer(word) {
-        feedbackEl.textContent = translations[languageSelect.value].correctFeedback;
+        const feedbackText = translations[languageSelect.value].correctFeedback;
+        feedbackEl.textContent = feedbackText.replace('{answers}', word.answers.join(' / '));
         feedbackEl.className = 'correct';
         correctCount++;
         if (isPracticeMode) {
