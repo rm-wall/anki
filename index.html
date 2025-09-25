@@ -3,16 +3,25 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>暗记程序</title>
+    <title data-i18n="title">暗记程序</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div class="container">
-        <h1>暗记程序</h1>
+        <div class="language-switcher">
+            <label for="language-select" data-i18n="languageLabel">语言:</label>
+            <select id="language-select">
+                <option value="zh-CN">中文</option>
+                <option value="en">English</option>
+                <option value="ja">日本語</option>
+            </select>
+        </div>
+
+        <h1 data-i18n="mainHeading">暗记程序</h1>
 
         <div id="setup">
-            <h2>输入单词列表</h2>
-            <p>每行一个词条，格式为：<b>问题, 答案1, 答案2...</b>，例如：</p>
+            <h2 data-i18n="listHeading">输入单词列表</h2>
+            <p data-i18n="instructions">每行一个词条，格式为：<b>问题, 答案1, 答案2...</b>，例如：</p>
             <p><code>武器,ぶき,buki</code></p>
             <textarea id="word-list-input" rows="10">武器,ぶき,buki
 車,くるま,kuruma
@@ -21,37 +30,37 @@
 食べる,たべる,taberu
 飲む,のむ,nomu
 日本語,にほんご,nihongo,Japanese,Japanisch</textarea>
-            <button id="start-button">开始学习</button>
-            <button id="show-errors-button">查看错题</button>
-            <button id="practice-errors-button">练习错题</button>
+            <button id="start-button" data-i18n="startButton">开始学习</button>
+            <button id="show-errors-button" data-i18n="showErrorsButton">查看错题</button>
+            <button id="practice-errors-button" data-i18n="practiceErrorsButton">练习错题</button>
         </div>
 
         <div id="card" style="display: none;">
             <div id="question" class="question"></div>
-            <input type="text" id="answer-input" placeholder="输入答案后按回车" autocomplete="off">
+            <input type="text" id="answer-input" data-i18n-placeholder="answerPlaceholder" placeholder="输入答案后按回车" autocomplete="off">
             <div id="feedback"></div>
-            <button id="continue-button" style="display: none;">继续</button>
-            <button id="terminate-button">终止测验</button>
+            <button id="continue-button" style="display: none;" data-i18n="continueButton">继续</button>
+            <button id="terminate-button" data-i18n="terminateButton">终止测验</button>
         </div>
 
         <div id="summary" style="display: none;">
-            <h2>完成！</h2>
-            <p>正确: <span id="correct-count">0</span></p>
-            <p>错误: <span id="incorrect-count">0</span></p>
+            <h2 data-i18n="summaryHeading">完成！</h2>
+            <p><span data-i18n="correctLabel">正确</span>: <span id="correct-count">0</span></p>
+            <p><span data-i18n="incorrectLabel">错误</span>: <span id="incorrect-count">0</span></p>
             
             <div id="incorrect-words-container" style="display: none;">
-                <h3>答错的单词 (方便复习)</h3>
+                <h3 data-i18n="incorrectWordsHeading">答错的单词 (方便复习)</h3>
                 <div id="incorrect-words-list"></div>
             </div>
 
-            <button id="restart-button">重新开始</button>
+            <button id="restart-button" data-i18n="restartButton">重新开始</button>
         </div>
     </div>
 
     <div id="error-modal" class="modal">
         <div class="modal-content">
             <span class="close-button">&times;</span>
-            <h2>答错的单词记录</h2>
+            <h2 data-i18n="errorModalHeading">答错的单词记录</h2>
             <div id="modal-incorrect-list"></div>
         </div>
     </div>

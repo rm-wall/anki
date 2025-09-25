@@ -1,7 +1,83 @@
 document.addEventListener('DOMContentLoaded', () => {
+    const languageSelect = document.getElementById('language-select');
     const questionEl = document.getElementById('question');
     const answerInput = document.getElementById('answer-input');
     const feedbackEl = document.getElementById('feedback');
+    
+    const translations = {
+        'zh-CN': {
+            title: '暗记程序',
+            languageLabel: '语言:',
+            mainHeading: '暗记程序',
+            listHeading: '输入单词列表',
+            instructions: '每行一个词条，格式为：<b>问题, 答案1, 答案2...</b>，例如：',
+            startButton: '开始学习',
+            showErrorsButton: '查看错题',
+            practiceErrorsButton: '练习错题',
+            answerPlaceholder: '输入答案后按回车',
+            continueButton: '继续',
+            terminateButton: '终止测验',
+            summaryHeading: '完成！',
+            correctLabel: '正确',
+            incorrectLabel: '错误',
+            incorrectWordsHeading: '答错的单词 (方便复习)',
+            restartButton: '重新开始',
+            errorModalHeading: '答错的单词记录',
+            correctFeedback: '正确!',
+            incorrectFeedback: '错误! 答案: {answers}',
+            emptyListAlert: '单词列表为空或格式不正确。',
+            noErrorsAlert: '没有错题可以练习！',
+            noErrorHistoryAlert: '没有发现错题记录。'
+        },
+        'en': {
+            title: 'Anki Program',
+            languageLabel: 'Language:',
+            mainHeading: 'Anki Program',
+            listHeading: 'Enter Word List',
+            instructions: 'One entry per line, format: <b>Question, Answer 1, Answer 2...</b>, e.g.:',
+            startButton: 'Start Learning',
+            showErrorsButton: 'View Incorrect',
+            practiceErrorsButton: 'Practice Incorrect',
+            answerPlaceholder: 'Type answer and press Enter',
+            continueButton: 'Continue',
+            terminateButton: 'End Test',
+            summaryHeading: 'Finished!',
+            correctLabel: 'Correct',
+            incorrectLabel: 'Incorrect',
+            incorrectWordsHeading: 'Incorrect Words (for review)',
+            restartButton: 'Restart',
+            errorModalHeading: 'Incorrect Word History',
+            correctFeedback: 'Correct!',
+            incorrectFeedback: 'Incorrect! The answer is: {answers}',
+            emptyListAlert: 'The word list is empty or formatted incorrectly.',
+            noErrorsAlert: 'No incorrect words to practice!',
+            noErrorHistoryAlert: 'No incorrect word history found.'
+        },
+        'ja': {
+            title: '暗記プログラム',
+            languageLabel: '言語:',
+            mainHeading: '暗記プログラム',
+            listHeading: '単語リストを入力',
+            instructions: '各行に1つのエントリ、形式：<b>問題, 答え1, 答え2...</b>、例：',
+            startButton: '学習開始',
+            showErrorsButton: '間違いを確認',
+            practiceErrorsButton: '間違いを練習',
+            answerPlaceholder: '答えを入力してEnterキーを押す',
+            continueButton: '次へ',
+            terminateButton: 'テスト終了',
+            summaryHeading: '完了！',
+            correctLabel: '正解',
+            incorrectLabel: '不正解',
+            incorrectWordsHeading: '間違った単語（復習用）',
+            restartButton: '再開',
+            errorModalHeading: '間違った単語の記録',
+            correctFeedback: '正解！',
+            incorrectFeedback: '不正解！答えは: {answers}',
+            emptyListAlert: '単語リストが空か、形式が正しくありません。',
+            noErrorsAlert: '練習する間違いはありません！',
+            noErrorHistoryAlert: '間違いの記録が見つかりません。'
+        }
+    };
     
     // Screen elements
     const setupEl = document.getElementById('setup');
@@ -37,6 +113,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let sessionIncorrectWords = [];
     const ALL_TIME_INCORRECT_KEY = 'allTimeIncorrectWords';
     const WORD_LIST_STORAGE_KEY = 'wordListContent';
+    const LANGUAGE_STORAGE_KEY = 'preferredLanguage';
     let isChecking = false;
 
     // --- Game Flow Functions ---
@@ -53,7 +130,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }).filter(word => word);
 
         if (parsedWords.length === 0) {
-            alert('单词列表为空或格式不正确。');
+            alert(translations[languageSelect.value].emptyListAlert);
             return;
         }
         words = parsedWords;
@@ -66,7 +143,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function startPracticeGame() {
         const incorrectWords = JSON.parse(localStorage.getItem(ALL_TIME_INCORRECT_KEY) || '[]');
         if (incorrectWords.length === 0) {
-            alert('没有错题可以练习！');
+            alert(translations[languageSelect.value].noErrorsAlert);
             return;
         }
         words = incorrectWords;
@@ -155,7 +232,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function handleCorrectAnswer(word) {
-        feedbackEl.textContent = '正确!';
+        feedbackEl.textContent = translations[languageSelect.value].correctFeedback;
         feedbackEl.className = 'correct';
         correctCount++;
         if (isPracticeMode) {
@@ -164,7 +241,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function handleIncorrectAnswer(word) {
-        feedbackEl.textContent = `错误! 答案: ${word.answers.join(' / ')}`;
+        const feedbackText = translations[languageSelect.value].incorrectFeedback;
+        feedbackEl.textContent = feedbackText.replace('{answers}', word.answers.join(' / '));
         feedbackEl.className = 'incorrect';
         incorrectCount++;
         sessionIncorrectWords.push(word);
@@ -219,7 +297,7 @@ document.addEventListener('DOMContentLoaded', () => {
             modalIncorrectListEl.innerHTML = incorrectWords.map(word => `<div>${word.answers.join(', ')}</div>`).join('');
             errorModal.style.display = 'block';
         } else {
-            alert('没有发现错题记录。');
+            alert(translations[languageSelect.value].noErrorHistoryAlert);
         }
     }
 
@@ -237,7 +315,30 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    // --- Language Functions ---
+    function setLanguage(lang) {
+        const translation = translations[lang];
+        document.documentElement.lang = lang;
+        document.querySelectorAll('[data-i18n]').forEach(el => {
+            const key = el.getAttribute('data-i18n');
+            if (translation[key]) {
+                el.innerHTML = translation[key];
+            }
+        });
+        document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+            const key = el.getAttribute('data-i18n-placeholder');
+            if (translation[key]) {
+                el.placeholder = translation[key];
+            }
+        });
+        localStorage.setItem(LANGUAGE_STORAGE_KEY, lang);
+        languageSelect.value = lang;
+    }
+
     // --- Event Listeners ---
+    languageSelect.addEventListener('change', (event) => {
+        setLanguage(event.target.value);
+    });
     startButton.addEventListener('click', initializeGame);
     practiceErrorsButton.addEventListener('click', startPracticeGame);
     continueButton.addEventListener('click', proceedToNextWord);
@@ -268,4 +369,17 @@ document.addEventListener('DOMContentLoaded', () => {
     // Initial check when the page loads
     loadWordListFromStorage();
     checkIncorrectWordsStatus();
+
+    const savedLang = localStorage.getItem(LANGUAGE_STORAGE_KEY);
+    const browserLang = navigator.language.split('-')[0];
+
+    if (savedLang) {
+        setLanguage(savedLang);
+    } else if (translations[navigator.language]) {
+        setLanguage(navigator.language);
+    } else if (translations[browserLang]) {
+        setLanguage(browserLang);
+    } else {
+        setLanguage('en'); // Default to English
+    }
 });
