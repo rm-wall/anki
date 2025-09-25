@@ -162,8 +162,7 @@ document.addEventListener('DOMContentLoaded', () => {
         summaryEl.style.display = 'none';
         cardEl.style.display = 'block';
         answerInput.disabled = false;
-        answerInput.value = '';
-        feedbackEl.textContent = '';
+        feedbackEl.innerHTML = '&nbsp';
         feedbackEl.className = '';
         continueButton.style.display = 'none';
         displayNextWord();
@@ -222,9 +221,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function proceedToNextWord() {
-        isChecking = false;
         currentWordIndex++;
-        feedbackEl.textContent = '';
+        isChecking = false;
+        feedbackEl.innerHTML = '&nbsp';
         feedbackEl.className = '';
         answerInput.disabled = false;
         continueButton.style.display = 'none';
@@ -251,7 +250,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function retryQuestion() {
         isChecking = false;
-        feedbackEl.textContent = '';
+        feedbackEl.innerHTML = '&nbsp;';
         feedbackEl.className = '';
         answerInput.disabled = false;
         answerInput.value = '';
