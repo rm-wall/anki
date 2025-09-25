@@ -29,7 +29,8 @@ document.addEventListener('DOMContentLoaded', () => {
             incorrectFeedback: '错误! 答案: {answers}',
             emptyListAlert: '单词列表为空或格式不正确。',
             noErrorsAlert: '没有错题可以练习！',
-            noErrorHistoryAlert: '没有发现错题记录。'
+            noErrorHistoryAlert: '没有发现错题记录。',
+            autoAdvanceLabel: '自动跳到下一题'
         },
         'en': {
             title: 'Anki Program',
@@ -55,7 +56,8 @@ document.addEventListener('DOMContentLoaded', () => {
             incorrectFeedback: 'Incorrect! The answer is: {answers}',
             emptyListAlert: 'The word list is empty or formatted incorrectly.',
             noErrorsAlert: 'No incorrect words to practice!',
-            noErrorHistoryAlert: 'No incorrect word history found.'
+            noErrorHistoryAlert: 'No incorrect word history found.',
+            autoAdvanceLabel: 'Auto-advance to next question'
         },
         'ja': {
             title: '暗記プログラム',
@@ -81,7 +83,8 @@ document.addEventListener('DOMContentLoaded', () => {
             incorrectFeedback: '不正解！答えは: {answers}',
             emptyListAlert: '単語リストが空か、形式が正しくありません。',
             noErrorsAlert: '練習する間違いはありません！',
-            noErrorHistoryAlert: '間違いの記録が見つかりません。'
+            noErrorHistoryAlert: '間違いの記録が見つかりません。',
+            autoAdvanceLabel: '正解の場合、自動的に次に進む'
         }
     };
     
@@ -101,6 +104,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const randomOrderCheckbox = document.getElementById('random-order-checkbox');
     const fileDropZone = document.getElementById('file-drop-zone');
     const fileInput = document.getElementById('file-input');
+    const autoAdvanceCheckbox = document.getElementById('auto-advance-checkbox');
 
     // Summary stats
     const correctCountEl = document.getElementById('correct-count');
@@ -226,7 +230,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (processedAnswers.includes(processedUserAnswer)) {
             handleCorrectAnswer(currentWord);
-            setTimeout(proceedToNextWord, 1500);
+            if (autoAdvanceCheckbox.checked) {
+                setTimeout(proceedToNextWord, 1500);
+            } else {
+                continueButton.style.display = 'inline-block';
+            }
             answerInput.blur();
         } else {
             handleIncorrectAnswer(currentWord);
@@ -385,7 +393,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     document.addEventListener('keydown', (event) => {
         if (event.key === 'Enter' && continueButton.style.display !== 'none') {
-            retryQuestion();
+            if (feedbackEl.classList.contains('correct')) {
+                proceedToNextWord();
+            } else {
+                retryQuestion();
+            }
         }
     });
 
