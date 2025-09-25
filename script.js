@@ -178,7 +178,6 @@ document.addEventListener('DOMContentLoaded', () => {
         answerInput.disabled = false;
         answerInput.value = '';
         continueButton.style.display = 'none';
-        tryAgainButton.style.display = 'none';
         answerInput.focus();
     }
 
