@@ -11,6 +11,8 @@ document.addEventListener('DOMContentLoaded', () => {
             mainHeading: '暗记程序',
             listHeading: '输入单词列表',
             instructions: '每行一个词条，格式为：<b>问题, 答案1, 答案2...</b>，例如：',
+            dropZoneLabel: '将文件拖放到此处，或点击选择文件',
+            randomOrderLabel: '随机顺序',
             startButton: '开始学习',
             showErrorsButton: '查看错题',
             practiceErrorsButton: '练习错题',
@@ -35,6 +37,8 @@ document.addEventListener('DOMContentLoaded', () => {
             mainHeading: 'Anki Program',
             listHeading: 'Enter Word List',
             instructions: 'One entry per line, format: <b>Question, Answer 1, Answer 2...</b>, e.g.:',
+            dropZoneLabel: 'Drag and drop a file here, or click to select a file',
+            randomOrderLabel: 'Random Order',
             startButton: 'Start Learning',
             showErrorsButton: 'View Incorrect',
             practiceErrorsButton: 'Practice Incorrect',
@@ -59,6 +63,8 @@ document.addEventListener('DOMContentLoaded', () => {
             mainHeading: '暗記プログラム',
             listHeading: '単語リストを入力',
             instructions: '各行に1つのエントリ、形式：<b>問題, 答え1, 答え2...</b>、例：',
+            dropZoneLabel: 'ここにファイルをドラッグ＆ドロップするか、クリックしてファイルを選択します',
+            randomOrderLabel: 'ランダムな順序',
             startButton: '学習開始',
             showErrorsButton: '間違いを確認',
             practiceErrorsButton: '間違いを練習',
@@ -92,6 +98,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const showErrorsButton = document.getElementById('show-errors-button');
     const practiceErrorsButton = document.getElementById('practice-errors-button');
     const continueButton = document.getElementById('continue-button');
+    const randomOrderCheckbox = document.getElementById('random-order-checkbox');
+    const fileDropZone = document.getElementById('file-drop-zone');
+    const fileInput = document.getElementById('file-input');
 
     // Summary stats
     const correctCountEl = document.getElementById('correct-count');
@@ -158,7 +167,9 @@ document.addEventListener('DOMContentLoaded', () => {
         correctCount = 0;
         incorrectCount = 0;
         sessionIncorrectWords = [];
-        shuffle(words);
+        if (randomOrderCheckbox.checked) {
+            shuffle(words);
+        }
         summaryEl.style.display = 'none';
         cardEl.style.display = 'block';
         answerInput.disabled = false;
@@ -200,16 +211,20 @@ document.addEventListener('DOMContentLoaded', () => {
     function checkAnswer() {
         if (isChecking) return;
 
-        const userAnswer = answerInput.value.trim().toLowerCase();
+        const userAnswer = answerInput.value.trim();
         if (userAnswer === '') return;
 
         isChecking = true;
+        // Process user answer: remove all spaces and convert to lower case
+        const processedUserAnswer = userAnswer.replace(/\s/g, '').toLowerCase();
+        
         const currentWord = words[currentWordIndex];
-        const lowerCaseAnswers = currentWord.answers.map(a => a.toLowerCase());
+        // Process correct answers similarly
+        const processedAnswers = currentWord.answers.map(a => a.replace(/\s/g, '').toLowerCase());
         
         answerInput.disabled = true;
 
-        if (lowerCaseAnswers.includes(userAnswer)) {
+        if (processedAnswers.includes(processedUserAnswer)) {
             handleCorrectAnswer(currentWord);
             setTimeout(proceedToNextWord, 1500);
             answerInput.blur();
@@ -314,6 +329,14 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    function handleFile(file) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            wordListInput.value = e.target.result;
+        };
+        reader.readAsText(file);
+    }
+
     // --- Language Functions ---
     function setLanguage(lang) {
         const translation = translations[lang];
@@ -362,6 +385,34 @@ document.addEventListener('DOMContentLoaded', () => {
     document.addEventListener('keydown', (event) => {
         if (event.key === 'Enter' && continueButton.style.display !== 'none') {
             retryQuestion();
+        }
+    });
+
+    // File import listeners
+    fileDropZone.addEventListener('click', () => fileInput.click());
+
+    fileDropZone.addEventListener('dragover', (event) => {
+        event.preventDefault();
+        fileDropZone.classList.add('dragover');
+    });
+
+    fileDropZone.addEventListener('dragleave', () => {
+        fileDropZone.classList.remove('dragover');
+    });
+
+    fileDropZone.addEventListener('drop', (event) => {
+        event.preventDefault();
+        fileDropZone.classList.remove('dragover');
+        const files = event.dataTransfer.files;
+        if (files.length > 0) {
+            handleFile(files[0]);
+        }
+    });
+
+    fileInput.addEventListener('change', (event) => {
+        const files = event.target.files;
+        if (files.length > 0) {
+            handleFile(files[0]);
         }
     });
 

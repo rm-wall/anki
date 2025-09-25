@@ -85,6 +85,32 @@ h1 {
     margin-bottom: 15px;
 }
 
+#file-drop-zone {
+    border: 2px dashed #ccc;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 15px;
+    cursor: pointer;
+    transition: border-color 0.2s, background-color 0.2s;
+}
+
+#file-drop-zone p {
+    margin: 0;
+    color: #666;
+}
+
+#file-drop-zone.dragover {
+    border-color: #007aff;
+    background-color: #f0f8ff;
+}
+
+.order-option {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 15px;
+}
+
 #feedback {
     margin-top: 15px;
     min-height: 2.8rem; /* Approximately two lines of text */
