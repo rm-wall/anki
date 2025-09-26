@@ -527,7 +527,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function showAllCardsModal() {
         renderAllCardsModal('active');
-        errorModal.style.display = 'block';
+        errorModal.style.display = 'flex';
     }
 
     function shuffle(array) {
