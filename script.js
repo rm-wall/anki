@@ -1,9 +1,5 @@
 document.addEventListener('DOMContentLoaded', () => {
-    const languageSelect = document.getElementById('language-select');
-    const questionEl = document.getElementById('question');
-    const answerInput = document.getElementById('answer-input');
-    const feedbackEl = document.getElementById('feedback');
-    
+    // --- I18N Translations ---
     const translations = {
         'zh-CN': {
             title: '暗记程序',
@@ -13,27 +9,44 @@ document.addEventListener('DOMContentLoaded', () => {
             instructions: '每行一个词条，格式为：<b>问题, 答案1, 答案2...</b>，例如：',
             dropZoneLabel: '将文件拖放到此处，或点击选择文件',
             randomOrderLabel: '随机顺序',
-            startButton: '开始学习',
-            showErrorsButton: '查看错题',
-            practiceErrorsButton: '练习错题',
+            startButton: '开始学习 ({dueCount})',
+            reviewing: '学习中...', 
+            showAllCardsButton: '查看所有卡片',
             clearCacheButton: '清空缓存',
             cacheClearedAlert: '缓存已清空！',
-            confirmClearCache: '确定要清空所有本地数据吗？这将删除所有错题记录、保存的单词列表和语言设置。此操作不可撤销。',
+            confirmClearCache: '确定要清空所有本地数据吗？这将删除所有卡片记录和语言设置。此操作不可撤销。',
             answerPlaceholder: '输入答案后按回车',
             continueButton: '继续',
             terminateButton: '终止测验',
-            summaryHeading: '完成！',
+            summaryHeading: '本轮学习完成！',
             correctLabel: '正确',
             incorrectLabel: '错误',
-            incorrectWordsHeading: '答错的单词 (方便复习)',
-            restartButton: '重新开始',
-            errorModalHeading: '答错的单词记录',
+            incorrectWordsHeading: '本轮答错的单词',
+            restartButton: '返回主菜单',
+            allCardsModalHeading: '所有卡片状态',
             correctFeedback: '正确! 答案: {answers}',
             incorrectFeedback: '错误! 答案: {answers}',
             emptyListAlert: '单词列表为空或格式不正确。',
-            noErrorsAlert: '没有错题可以练习！',
-            noErrorHistoryAlert: '没有发现错题记录。',
-            autoAdvanceLabel: '自动跳到下一题'
+            noDueCards: '今日无待复习卡片！',
+            autoAdvanceLabel: '自动跳到下一题',
+            cardQuestion: '问题',
+            cardAnswers: '答案',
+            cardNextReview: '下次复习',
+            cardInterval: '间隔(天)',
+            cardEfactor: '难度系数',
+            cardStatus: '状态',
+            cardActions: '操作',
+            statusNew: '新',
+            statusLearning: '学习中',
+            statusReview: '复习',
+            statusDue: '到期',
+            statusSuspended: '已暂停',
+            today: '今天',
+            noCardsFound: '没有找到任何卡片。',
+            suspend: '暂停',
+            restore: '恢复',
+            activeCards: '活动卡片',
+            suspendedCards: '已暂停'
         },
         'en': {
             title: 'Anki Program',
@@ -43,27 +56,44 @@ document.addEventListener('DOMContentLoaded', () => {
             instructions: 'One entry per line, format: <b>Question, Answer 1, Answer 2...</b>, e.g.:',
             dropZoneLabel: 'Drag and drop a file here, or click to select a file',
             randomOrderLabel: 'Random Order',
-            startButton: 'Start Learning',
-            showErrorsButton: 'View Incorrect',
-            practiceErrorsButton: 'Practice Incorrect',
+            startButton: 'Start Learning ({dueCount})',
+            reviewing: 'Reviewing...', 
+            showAllCardsButton: 'View All Cards',
             clearCacheButton: 'Clear Cache',
             cacheClearedAlert: 'Cache cleared!',
-            confirmClearCache: 'Are you sure you want to clear all local data? This will delete all incorrect word history, saved word lists, and language settings. This action cannot be undone.',
+            confirmClearCache: 'Are you sure you want to clear all local data? This will delete all card history and language settings. This action cannot be undone.',
             answerPlaceholder: 'Type answer and press Enter',
             continueButton: 'Continue',
             terminateButton: 'End Test',
-            summaryHeading: 'Finished!',
+            summaryHeading: 'Session Finished!',
             correctLabel: 'Correct',
             incorrectLabel: 'Incorrect',
-            incorrectWordsHeading: 'Incorrect Words (for review)',
-            restartButton: 'Restart',
-            errorModalHeading: 'Incorrect Word History',
+            incorrectWordsHeading: 'Incorrect words this session',
+            restartButton: 'Return to Main Menu',
+            allCardsModalHeading: 'All Cards Status',
             correctFeedback: 'Correct! The answer is: {answers}',
             incorrectFeedback: 'Incorrect! The answer is: {answers}',
             emptyListAlert: 'The word list is empty or formatted incorrectly.',
-            noErrorsAlert: 'No incorrect words to practice!',
-            noErrorHistoryAlert: 'No incorrect word history found.',
-            autoAdvanceLabel: 'Auto-advance to next question'
+            noDueCards: 'No cards due for review today!',
+            autoAdvanceLabel: 'Auto-advance to next question',
+            cardQuestion: 'Question',
+            cardAnswers: 'Answers',
+            cardNextReview: 'Next Review',
+            cardInterval: 'Interval(d)',
+            cardEfactor: 'E-Factor',
+            cardStatus: 'Status',
+            cardActions: 'Actions',
+            statusNew: 'New',
+            statusLearning: 'Learning',
+            statusReview: 'Review',
+            statusDue: 'Due',
+            statusSuspended: 'Suspended',
+            today: 'Today',
+            noCardsFound: 'No cards found.',
+            suspend: 'Suspend',
+            restore: 'Restore',
+            activeCards: 'Active Cards',
+            suspendedCards: 'Suspended'
         },
         'ja': {
             title: '暗記プログラム',
@@ -73,36 +103,55 @@ document.addEventListener('DOMContentLoaded', () => {
             instructions: '各行に1つのエントリ、形式：<b>問題, 答え1, 答え2...</b>、例：',
             dropZoneLabel: 'ここにファイルをドラッグ＆ドロップするか、クリックしてファイルを選択します',
             randomOrderLabel: 'ランダムな順序',
-            startButton: '学習開始',
-            showErrorsButton: '間違いを確認',
-            practiceErrorsButton: '間違いを練習',
+            startButton: '学習開始 ({dueCount})',
+            reviewing: '復習中...', 
+            showAllCardsButton: '全カード表示',
             clearCacheButton: 'キャッシュをクリア',
             cacheClearedAlert: 'キャッシュがクリアされました！',
-            confirmClearCache: '本当にすべてのローカルデータをクリアしますか？これには、すべての間違い記録、保存された単語リスト、言語設定が含まれます。この操作は元に戻せません。',
+            confirmClearCache: '本当にすべてのローカルデータをクリアしますか？これには、すべてのカード記録と言語設定が含まれます。この操作は元に戻せません。',
             answerPlaceholder: '答えを入力してEnterキーを押す',
             continueButton: '次へ',
             terminateButton: 'テスト終了',
-            summaryHeading: '完了！',
+            summaryHeading: 'セッション完了！',
             correctLabel: '正解',
             incorrectLabel: '不正解',
-            incorrectWordsHeading: '間違った単語（復習用）',
-            restartButton: '再開',
-            errorModalHeading: '間違った単語の記録',
+            incorrectWordsHeading: 'このセッションで間違った単語',
+            restartButton: 'メインメニューに戻る',
+            allCardsModalHeading: '全カードの状態',
             correctFeedback: '正解！答えは: {answers}',
             incorrectFeedback: '不正解！答えは: {answers}',
             emptyListAlert: '単語リストが空か、形式が正しくありません。',
-            noErrorsAlert: '練習する間違いはありません！',
-            noErrorHistoryAlert: '間違いの記録が見つかりません。',
-            autoAdvanceLabel: '正解の場合、自動的に次に進む'
+            noDueCards: '今日レビューするカードはありません！',
+            autoAdvanceLabel: '正解の場合、自動的に次に進む',
+            cardQuestion: '問題',
+            cardAnswers: '答え',
+            cardNextReview: '次回レビュー',
+            cardInterval: '間隔(日)',
+            cardEfactor: '難易度係数',
+            cardStatus: '状態',
+            cardActions: '操作',
+            statusNew: '新規',
+            statusLearning: '学習中',
+            statusReview: '復習',
+            statusDue: '期限切れ',
+            statusSuspended: '一時停止中',
+            today: '今日',
+            noCardsFound: 'カードが見つかりません。',
+            suspend: '一時停止',
+            restore: '再開',
+            activeCards: 'アクティブなカード',
+            suspendedCards: '一時停止中'
         }
     };
-    
-    // Screen elements
+
+    // --- DOM Elements ---
     const setupEl = document.getElementById('setup');
     const cardEl = document.getElementById('card');
     const summaryEl = document.getElementById('summary');
-
-    // Buttons and inputs
+    const languageSelect = document.getElementById('language-select');
+    const questionEl = document.getElementById('question');
+    const answerInput = document.getElementById('answer-input');
+    const feedbackEl = document.getElementById('feedback');
     const startButton = document.getElementById('start-button');
     const wordListInput = document.getElementById('word-list-input');
     const restartButton = document.getElementById('restart-button');
@@ -115,88 +164,174 @@ document.addEventListener('DOMContentLoaded', () => {
     const fileDropZone = document.getElementById('file-drop-zone');
     const fileInput = document.getElementById('file-input');
     const autoAdvanceCheckbox = document.getElementById('auto-advance-checkbox');
-
-    // Summary stats
     const correctCountEl = document.getElementById('correct-count');
     const incorrectCountEl = document.getElementById('incorrect-count');
     const incorrectWordsContainer = document.getElementById('incorrect-words-container');
     const incorrectWordsListEl = document.getElementById('incorrect-words-list');
-
-    // Modal elements
     const errorModal = document.getElementById('error-modal');
     const closeModalButton = document.querySelector('.close-button');
     const modalIncorrectListEl = document.getElementById('modal-incorrect-list');
 
-    // App state
-    let words = [];
-    let currentWordIndex = 0;
-    let correctCount = 0;
-    let incorrectCount = 0;
-    let isPracticeMode = false;
-    let sessionIncorrectWords = [];
-    const ALL_TIME_INCORRECT_KEY = 'allTimeIncorrectWords';
+    // --- App State ---
+    let sessionCards = [];
+    let currentCardIndex = 0;
+    let sessionCorrectCount = 0;
+    let sessionIncorrectCount = 0;
+    let sessionIncorrectCards = [];
+    let isChecking = false;
+    let allCards = new Map();
+
+    // --- Storage Keys ---
+    const CARDS_STORAGE_KEY = 'ankiCardsData';
     const WORD_LIST_STORAGE_KEY = 'wordListContent';
     const LANGUAGE_STORAGE_KEY = 'preferredLanguage';
-    let isChecking = false;
+
+    // --- Spaced Repetition Logic ---
+    const cardManager = {
+        getTodayDateString: () => new Date().toISOString().split('T')[0],
+
+        load: () => {
+            const storedCards = JSON.parse(localStorage.getItem(CARDS_STORAGE_KEY) || '[]');
+            allCards = new Map(storedCards.map(card => [card.id, card]));
+            cardManager.updateDueCount();
+        },
+
+        save: () => {
+            localStorage.setItem(CARDS_STORAGE_KEY, JSON.stringify(Array.from(allCards.values())));
+        },
+
+        syncFromTextarea: () => {
+            const text = wordListInput.value.trim();
+            if (!text) {
+                allCards.clear();
+                cardManager.save();
+                cardManager.updateDueCount();
+                return;
+            }
+            
+            const lines = text.split('\n');
+            const seenIds = new Set();
+
+            lines.forEach(line => {
+                const parts = line.split(',').map(part => part.trim()).filter(part => part);
+                if (parts.length < 2) return;
+
+                const id = parts.join(',');
+                seenIds.add(id);
+
+                if (!allCards.has(id)) {
+                    allCards.set(id, {
+                        id: id,
+                        question: parts[0],
+                        answers: parts,
+                        repetitions: 0,
+                        efactor: 2.5,
+                        interval: 0,
+                        nextReviewDate: cardManager.getTodayDateString(),
+                        isSuspended: false, // New property
+                    });
+                }
+            });
+            
+            allCards.forEach((card, id) => {
+                if (!seenIds.has(id)) {
+                    allCards.delete(id);
+                }
+            });
+
+            cardManager.save();
+            cardManager.updateDueCount();
+        },
+
+        getDueCards: () => {
+            const today = cardManager.getTodayDateString();
+            return Array.from(allCards.values()).filter(card => !card.isSuspended && card.nextReviewDate <= today);
+        },
+
+        update: (cardId, isCorrect) => {
+            const card = allCards.get(cardId);
+            if (!card) return;
+
+            if (isCorrect) {
+                card.repetitions += 1;
+                if (card.repetitions === 1) card.interval = 1;
+                else if (card.repetitions === 2) card.interval = 6;
+                else card.interval = Math.ceil(card.interval * card.efactor);
+            } else {
+                card.repetitions = 0;
+                card.interval = 1;
+            }
+            
+            const quality = isCorrect ? 5 : 1;
+            card.efactor += (0.1 - (5 - quality) * (0.08 + (5 - quality) * 0.02));
+            if (card.efactor < 1.3) card.efactor = 1.3;
+
+            const nextReview = new Date();
+            nextReview.setDate(nextReview.getDate() + card.interval);
+            card.nextReviewDate = nextReview.toISOString().split('T')[0];
+            
+            cardManager.save();
+        },
+
+        suspend: (cardId) => {
+            const card = allCards.get(cardId);
+            if (card) {
+                card.isSuspended = true;
+                cardManager.save();
+                cardManager.updateDueCount();
+            }
+        },
+
+        restore: (cardId) => {
+            const card = allCards.get(cardId);
+            if (card) {
+                card.isSuspended = false;
+                card.nextReviewDate = cardManager.getTodayDateString(); // Make it due today
+                cardManager.save();
+                cardManager.updateDueCount();
+            }
+        },
+
+        updateDueCount: () => {
+            const dueCount = cardManager.getDueCards().length;
+            const lang = languageSelect.value;
+            const template = translations[lang].startButton || 'Start Learning ({dueCount})';
+            startButton.textContent = template.replace('{dueCount}', dueCount);
+            startButton.disabled = dueCount === 0;
+        }
+    };
 
     // --- Game Flow Functions ---
-
-    // 1. Starts a normal game from the textarea
     function initializeGame() {
-        const text = wordListInput.value;
-        localStorage.setItem(WORD_LIST_STORAGE_KEY, text);
+        cardManager.syncFromTextarea();
+        sessionCards = cardManager.getDueCards();
 
-        const parsedWords = text.trim().split('\n').map(line => {
-            const parts = line.split(',').map(part => part.trim()).filter(part => part);
-            if (parts.length === 0) return null;
-            return { question: parts[0], answers: parts };
-        }).filter(word => word);
-
-        if (parsedWords.length === 0) {
-            alert(translations[languageSelect.value].emptyListAlert);
+        if (sessionCards.length === 0) {
+            alert(translations[languageSelect.value].noDueCards);
             return;
         }
-        words = parsedWords;
-        isPracticeMode = false;
-        setupEl.style.display = 'none';
-        startGame();
-    }
 
-    // 2. Starts a practice game from localStorage
-    function startPracticeGame() {
-        const incorrectWords = JSON.parse(localStorage.getItem(ALL_TIME_INCORRECT_KEY) || '[]');
-        if (incorrectWords.length === 0) {
-            alert(translations[languageSelect.value].noErrorsAlert);
-            return;
-        }
-        words = incorrectWords;
-        isPracticeMode = true;
-        setupEl.style.display = 'none';
-        startGame();
-    }
+        if (randomOrderCheckbox.checked) shuffle(sessionCards);
 
-    // 3. Core game setup (for both normal and practice)
-    function startGame() {
-        currentWordIndex = 0;
-        correctCount = 0;
-        incorrectCount = 0;
-        sessionIncorrectWords = [];
-        if (randomOrderCheckbox.checked) {
-            shuffle(words);
-        }
+        currentCardIndex = 0;
+        sessionCorrectCount = 0;
+        sessionIncorrectCount = 0;
+        sessionIncorrectCards = [];
+
+        setupEl.style.display = 'none';
         summaryEl.style.display = 'none';
         cardEl.style.display = 'block';
         answerInput.disabled = false;
-        feedbackEl.innerHTML = '&nbsp';
+        feedbackEl.innerHTML = '&nbsp;';
         feedbackEl.className = '';
         continueButton.style.display = 'none';
-        displayNextWord();
+        
+        displayNextCard();
     }
 
-    // 4. Displays the next word or ends the game
-    function displayNextWord() {
-        if (currentWordIndex < words.length) {
-            questionEl.textContent = words[currentWordIndex].question;
+    function displayNextCard() {
+        if (currentCardIndex < sessionCards.length) {
+            questionEl.textContent = sessionCards[currentCardIndex].question;
             answerInput.value = '';
             answerInput.focus();
         } else {
@@ -204,142 +339,153 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // 5. Shows the summary screen
     function showSummary() {
-        correctCountEl.textContent = correctCount;
-        incorrectCountEl.textContent = incorrectCount;
+        correctCountEl.textContent = sessionCorrectCount;
+        incorrectCountEl.textContent = sessionIncorrectCount;
         cardEl.style.display = 'none';
         summaryEl.style.display = 'block';
         continueButton.style.display = 'none';
 
-        if (sessionIncorrectWords.length > 0) {
-            incorrectWordsListEl.innerHTML = sessionIncorrectWords.map(word => `<div>${word.answers.join(', ')}</div>`).join('');
+        if (sessionIncorrectCards.length > 0) {
+            incorrectWordsListEl.innerHTML = sessionIncorrectCards.map(card => `<div>${card.answers.join(', ')}</div>`).join('');
             incorrectWordsContainer.style.display = 'block';
         } else {
             incorrectWordsContainer.style.display = 'none';
         }
+        cardManager.updateDueCount();
     }
 
     // --- Answer Checking ---
-
     function checkAnswer() {
         if (isChecking) return;
-
         const userAnswer = answerInput.value.trim();
         if (userAnswer === '') return;
 
         isChecking = true;
-        // Process user answer: remove all spaces and convert to lower case
         const processedUserAnswer = userAnswer.replace(/\s/g, '').toLowerCase();
-        
-        const currentWord = words[currentWordIndex];
-        // Process correct answers similarly
-        const processedAnswers = currentWord.answers.map(a => a.replace(/\s/g, '').toLowerCase());
+        const currentCard = sessionCards[currentCardIndex];
+        const processedAnswers = currentCard.answers.map(a => a.replace(/\s/g, '').toLowerCase());
         
         answerInput.disabled = true;
 
         if (processedAnswers.includes(processedUserAnswer)) {
-            handleCorrectAnswer(currentWord);
-            if (autoAdvanceCheckbox.checked) {
-                setTimeout(proceedToNextWord, 1500);
-            } else {
-                continueButton.style.display = 'inline-block';
-            }
-            answerInput.blur();
+            handleCorrectAnswer(currentCard);
+            if (autoAdvanceCheckbox.checked) setTimeout(proceedToNextCard, 1500);
+            else continueButton.style.display = 'inline-block';
         } else {
-            handleIncorrectAnswer(currentWord);
+            handleIncorrectAnswer(currentCard);
             continueButton.style.display = 'inline-block';
-            answerInput.blur();
         }
+        answerInput.blur();
     }
 
-    function proceedToNextWord() {
-        currentWordIndex++;
-        isChecking = false;
-        feedbackEl.innerHTML = '&nbsp';
-        feedbackEl.className = '';
-        answerInput.disabled = false;
-        continueButton.style.display = 'none';
-        displayNextWord();
-    }
-
-    function handleCorrectAnswer(word) {
-        const feedbackText = translations[languageSelect.value].correctFeedback;
-        feedbackEl.textContent = feedbackText.replace('{answers}', word.answers.join(' / '));
-        feedbackEl.className = 'correct';
-        correctCount++;
-        if (isPracticeMode) {
-            removeWordFromIncorrectList(word);
-        }
-    }
-
-    function handleIncorrectAnswer(word) {
-        const feedbackText = translations[languageSelect.value].incorrectFeedback;
-        feedbackEl.textContent = feedbackText.replace('{answers}', word.answers.join(' / '));
-        feedbackEl.className = 'incorrect';
-        incorrectCount++;
-        sessionIncorrectWords.push(word);
-        addWordToIncorrectList(word);
-    }
-
-    function retryQuestion() {
+    function proceedToNextCard() {
+        currentCardIndex++;
         isChecking = false;
         feedbackEl.innerHTML = '&nbsp;';
         feedbackEl.className = '';
         answerInput.disabled = false;
-        answerInput.value = '';
         continueButton.style.display = 'none';
-        answerInput.focus();
+        displayNextCard();
     }
 
-    // --- LocalStorage Management ---
+    function handleCorrectAnswer(card) {
+        const feedbackText = translations[languageSelect.value].correctFeedback;
+        feedbackEl.textContent = feedbackText.replace('{answers}', card.answers.join(' / '));
+        feedbackEl.className = 'correct';
+        sessionCorrectCount++;
+        cardManager.update(card.id, true);
+    }
 
-    function addWordToIncorrectList(word) {
-        const incorrectWords = JSON.parse(localStorage.getItem(ALL_TIME_INCORRECT_KEY) || '[]');
-        if (!incorrectWords.some(w => w.question === word.question)) {
-            incorrectWords.push(word);
-            localStorage.setItem(ALL_TIME_INCORRECT_KEY, JSON.stringify(incorrectWords));
+    function handleIncorrectAnswer(card) {
+        const feedbackText = translations[languageSelect.value].incorrectFeedback;
+        feedbackEl.textContent = feedbackText.replace('{answers}', card.answers.join(' / '));
+        feedbackEl.className = 'incorrect';
+        sessionIncorrectCount++;
+        if (!sessionIncorrectCards.some(c => c.id === card.id)) {
+            sessionIncorrectCards.push(card);
         }
-    }
-
-    function removeWordFromIncorrectList(word) {
-        let incorrectWords = JSON.parse(localStorage.getItem(ALL_TIME_INCORRECT_KEY) || '[]');
-        incorrectWords = incorrectWords.filter(w => w.question !== word.question);
-        localStorage.setItem(ALL_TIME_INCORRECT_KEY, JSON.stringify(incorrectWords));
-    }
-
-    function loadWordListFromStorage() {
-        const savedWordList = localStorage.getItem(WORD_LIST_STORAGE_KEY);
-        if (savedWordList) {
-            wordListInput.value = savedWordList;
-        }
+        cardManager.update(card.id, false);
     }
 
     // --- UI and Utility Functions ---
-
     function showSetup() {
         summaryEl.style.display = 'none';
         cardEl.style.display = 'none';
         setupEl.style.display = 'block';
-        checkIncorrectWordsStatus();
+        cardManager.updateDueCount();
     }
 
-    function showErrorModal() {
-        const incorrectWords = JSON.parse(localStorage.getItem(ALL_TIME_INCORRECT_KEY) || '[]');
-        if (incorrectWords.length > 0) {
-            modalIncorrectListEl.innerHTML = incorrectWords.map(word => `<div>${word.answers.join(', ')}</div>`).join('');
-            errorModal.style.display = 'block';
+    function renderAllCardsModal(filterType = 'active') {
+        const lang = languageSelect.value;
+        const today = cardManager.getTodayDateString();
+        
+        const filteredCards = Array.from(allCards.values()).filter(card => {
+            return filterType === 'suspended' ? card.isSuspended : !card.isSuspended;
+        });
+
+        const t = (key, fallback) => translations[lang][key] || fallback;
+
+        const tableHeader = `
+            <thead>
+                <tr>
+                    <th>${t('cardQuestion', 'Question')}</th>
+                    <th>${t('cardAnswers', 'Answers')}</th>
+                    <th>${t('cardNextReview', 'Next Review')}</th>
+                    <th>${t('cardInterval', 'Interval')}</th>
+                    <th>${t('cardEfactor', 'E-Factor')}</th>
+                    <th>${t('cardStatus', 'Status')}</th>
+                    <th>${t('cardActions', 'Actions')}</th>
+                </tr>
+            </thead>`;
+
+        let tableBody;
+        if (filteredCards.length === 0) {
+            tableBody = `<tbody><tr><td colspan="7" style="text-align: center;">${t('noCardsFound', 'No cards found.')}</td></tr></tbody>`;
         } else {
-            alert(translations[languageSelect.value].noErrorHistoryAlert);
+            tableBody = `<tbody>` + filteredCards
+                .sort((a, b) => a.nextReviewDate.localeCompare(b.nextReviewDate))
+                .map(card => {
+                    let status;
+                    if (card.isSuspended) {
+                        status = `<span class="status-suspended">${t('statusSuspended', 'Suspended')}</span>`;
+                    } else if (card.repetitions === 0) {
+                        status = `<span class="status-new">${t('statusNew', 'New')}</span>`;
+                    } else if (card.nextReviewDate <= today) {
+                        status = `<span class="status-due">${t('statusDue', 'Due')}</span>`;
+                    } else {
+                        status = `<span class="status-review">${t('statusReview', 'Review')}</span>`;
+                    }
+
+                    const actionButton = card.isSuspended
+                        ? `<button class="action-btn restore-btn" data-action="restore" data-card-id="${card.id}">${t('restore', 'Restore')}</button>`
+                        : `<button class="action-btn suspend-btn" data-action="suspend" data-card-id="${card.id}">${t('suspend', 'Suspend')}</button>`;
+
+                    return `
+                        <tr class="${card.isSuspended ? 'suspended-row' : ''}">
+                            <td>${card.question || ''}</td>
+                            <td>${(card.answers || []).slice(1).join(', ')}</td>
+                            <td>${card.nextReviewDate === today ? t('today', 'Today') : card.nextReviewDate}</td>
+                            <td>${card.interval || 0}</td>
+                            <td>${(card.efactor || 2.5).toFixed(2)}</td>
+                            <td>${status}</td>
+                            <td>${actionButton}</td>
+                        </tr>`;
+                }).join('') + `</tbody>`;
         }
+        
+        const tabs = `
+            <div class="modal-toolbar">
+                <button class="tab-btn ${filterType === 'active' ? 'active' : ''}" data-filter="active">${t('activeCards', 'Active Cards')}</button>
+                <button class="tab-btn ${filterType === 'suspended' ? 'active' : ''}" data-filter="suspended">${t('suspendedCards', 'Suspended')}</button>
+            </div>`;
+
+        modalIncorrectListEl.innerHTML = `${tabs}<table class="cards-table">${tableHeader}${tableBody}</table>`;
     }
 
-    function checkIncorrectWordsStatus() {
-        const incorrectWords = JSON.parse(localStorage.getItem(ALL_TIME_INCORRECT_KEY) || '[]');
-        const hasIncorrectWords = incorrectWords.length > 0;
-        showErrorsButton.disabled = !hasIncorrectWords;
-        practiceErrorsButton.disabled = !hasIncorrectWords;
-        clearCacheButton.disabled = !hasIncorrectWords;
+    function showAllCardsModal() {
+        renderAllCardsModal('active'); // Always show active cards first
+        errorModal.style.display = 'block';
     }
 
     function shuffle(array) {
@@ -353,6 +499,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const reader = new FileReader();
         reader.onload = (e) => {
             wordListInput.value = e.target.result;
+            localStorage.setItem(WORD_LIST_STORAGE_KEY, e.target.result);
+            cardManager.syncFromTextarea();
         };
         reader.readAsText(file);
     }
@@ -360,29 +508,28 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Language Functions ---
     function setLanguage(lang) {
         const translation = translations[lang];
+        if (!translation) return;
+
         document.documentElement.lang = lang;
         document.querySelectorAll('[data-i18n]').forEach(el => {
             const key = el.getAttribute('data-i18n');
-            if (translation[key]) {
-                el.innerHTML = translation[key];
-            }
+            if (translation[key]) el.innerHTML = translation[key];
         });
         document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
             const key = el.getAttribute('data-i18n-placeholder');
-            if (translation[key]) {
-                el.placeholder = translation[key];
-            }
+            if (translation[key]) el.placeholder = translation[key];
         });
         localStorage.setItem(LANGUAGE_STORAGE_KEY, lang);
         languageSelect.value = lang;
+        cardManager.updateDueCount();
     }
 
     // --- Event Listeners ---
-    languageSelect.addEventListener('change', (event) => {
-        setLanguage(event.target.value);
-    });
+    languageSelect.addEventListener('change', (event) => setLanguage(event.target.value));
     startButton.addEventListener('click', initializeGame);
-    practiceErrorsButton.addEventListener('click', startPracticeGame);
+    showErrorsButton.addEventListener('click', showAllCardsModal);
+    if(practiceErrorsButton) practiceErrorsButton.style.display = 'none';
+
     clearCacheButton.addEventListener('click', () => {
         if (confirm(translations[languageSelect.value].confirmClearCache)) {
             localStorage.clear();
@@ -390,7 +537,7 @@ document.addEventListener('DOMContentLoaded', () => {
             location.reload();
         }
     });
-    continueButton.addEventListener('click', proceedToNextWord);
+    continueButton.addEventListener('click', proceedToNextCard);
     answerInput.addEventListener('keydown', (event) => {
         if (event.key === 'Enter') {
             event.stopPropagation();
@@ -399,79 +546,68 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     restartButton.addEventListener('click', showSetup);
     terminateButton.addEventListener('click', showSummary);
-    showErrorsButton.addEventListener('click', showErrorModal);
-    closeModalButton.addEventListener('click', () => {
-        errorModal.style.display = 'none';
-    });
+    closeModalButton.addEventListener('click', () => errorModal.style.display = 'none');
     window.addEventListener('click', (event) => {
-        if (event.target == errorModal) {
-            errorModal.style.display = 'none';
-        }
+        if (event.target == errorModal) errorModal.style.display = 'none';
+    });
+    wordListInput.addEventListener('input', () => {
+        localStorage.setItem(WORD_LIST_STORAGE_KEY, wordListInput.value);
+        cardManager.syncFromTextarea();
     });
 
-    document.addEventListener('keydown', (event) => {
-        if (event.key === 'Enter' && continueButton.style.display !== 'none') {
-            if (feedbackEl.classList.contains('correct')) {
-                proceedToNextWord();
-            } else {
-                retryQuestion();
-            }
+    // Delegated event listener for modal actions
+    modalIncorrectListEl.addEventListener('click', (event) => {
+        const target = event.target;
+        if (target.matches('.tab-btn')) {
+            renderAllCardsModal(target.dataset.filter);
+        } else if (target.matches('.action-btn')) {
+            const action = target.dataset.action;
+            const cardId = target.dataset.cardId;
+            if (action === 'suspend') cardManager.suspend(cardId);
+            else if (action === 'restore') cardManager.restore(cardId);
+            
+            const activeTab = modalIncorrectListEl.querySelector('.tab-btn.active');
+            renderAllCardsModal(activeTab ? activeTab.dataset.filter : 'active');
         }
     });
 
     // File import listeners
     fileDropZone.addEventListener('click', () => fileInput.click());
-
     const containerEl = document.querySelector('.container');
-
-    // Prevent browser from opening the file by default
-    window.addEventListener('dragover', (event) => {
-        event.preventDefault();
+    ['dragover', 'dragleave', 'drop'].forEach(eventName => {
+        window.addEventListener(eventName, e => e.preventDefault());
+        if (containerEl) containerEl.addEventListener(eventName, e => e.preventDefault());
     });
-
-    window.addEventListener('drop', (event) => {
-        event.preventDefault();
-    });
-
-    containerEl.addEventListener('dragover', (event) => {
-        event.preventDefault();
-        containerEl.classList.add('dragover');
-    });
-
-    containerEl.addEventListener('dragleave', () => {
-        containerEl.classList.remove('dragover');
-    });
-
-    containerEl.addEventListener('drop', (event) => {
-        event.preventDefault();
-        containerEl.classList.remove('dragover');
-        const files = event.dataTransfer.files;
-        if (files.length > 0) {
-            handleFile(files[0]);
-        }
-    });
-
-    fileInput.addEventListener('change', (event) => {
-        const files = event.target.files;
-        if (files.length > 0) {
-            handleFile(files[0]);
-        }
-    });
-
-    // Initial check when the page loads
-    loadWordListFromStorage();
-    checkIncorrectWordsStatus();
-
-    const savedLang = localStorage.getItem(LANGUAGE_STORAGE_KEY);
-    const browserLang = navigator.language.split('-')[0];
-
-    if (savedLang) {
-        setLanguage(savedLang);
-    } else if (translations[navigator.language]) {
-        setLanguage(navigator.language);
-    } else if (translations[browserLang]) {
-        setLanguage(browserLang);
-    } else {
-        setLanguage('en'); // Default to English
+    if (containerEl) {
+        containerEl.addEventListener('dragover', () => containerEl.classList.add('dragover'));
+        containerEl.addEventListener('dragleave', () => containerEl.classList.remove('dragover'));
+        containerEl.addEventListener('drop', (event) => {
+            containerEl.classList.remove('dragover');
+            if (event.dataTransfer.files.length > 0) handleFile(event.dataTransfer.files[0]);
+        });
     }
+    fileInput.addEventListener('change', (event) => {
+        if (event.target.files.length > 0) handleFile(event.target.files[0]);
+    });
+
+    // --- Initialization ---
+    function init() {
+        const savedWordList = localStorage.getItem(WORD_LIST_STORAGE_KEY);
+        if (savedWordList) wordListInput.value = savedWordList;
+
+        const savedLang = localStorage.getItem(LANGUAGE_STORAGE_KEY);
+        const browserLang = navigator.language.split('-')[0];
+        let initialLang = 'en';
+
+        if (savedLang && translations[savedLang]) initialLang = savedLang;
+        else if (translations[navigator.language]) initialLang = navigator.language;
+        else if (translations[browserLang]) initialLang = browserLang;
+        
+        setLanguage(initialLang);
+        cardManager.load();
+        cardManager.syncFromTextarea();
+        showSetup();
+    }
+
+    init();
 });
