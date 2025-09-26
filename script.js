@@ -671,6 +671,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Initialization ---
     function init() {
+        errorModal.style.display = 'none';
         setupButtons();
         const savedWordList = localStorage.getItem(WORD_LIST_STORAGE_KEY);
         if (savedWordList) wordListInput.value = savedWordList;
