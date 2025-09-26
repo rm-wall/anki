@@ -48,7 +48,8 @@ document.addEventListener('DOMContentLoaded', () => {
             suspend: '暂停',
             restore: '恢复',
             activeCards: '活动卡片',
-            suspendedCards: '已暂停'
+            suspendedCards: '已暂停',
+            lastUpdatedLabel: '最后更新于：'
         },
         'en': {
             title: 'Anki Program',
@@ -97,7 +98,8 @@ document.addEventListener('DOMContentLoaded', () => {
             suspend: 'Suspend',
             restore: 'Restore',
             activeCards: 'Active Cards',
-            suspendedCards: 'Suspended'
+            suspendedCards: 'Suspended',
+            lastUpdatedLabel: 'Last updated:'
         },
         'ja': {
             title: '暗記プログラム',
@@ -146,7 +148,8 @@ document.addEventListener('DOMContentLoaded', () => {
             suspend: '一時停止',
             restore: '再開',
             activeCards: 'アクティブなカード',
-            suspendedCards: '一時停止中'
+            suspendedCards: '一時停止中',
+            lastUpdatedLabel: '最終更新日：'
         }
     };
 
@@ -186,6 +189,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let sessionIncorrectCount = 0;
     let sessionIncorrectCards = [];
     let isChecking = false;
+    let isAnswerCorrect = false;
     let isCramming = false; // New state for cram mode
     let allCards = new Map();
 
@@ -396,19 +400,26 @@ document.addEventListener('DOMContentLoaded', () => {
         answerInput.disabled = true;
 
         if (processedAnswers.includes(processedUserAnswer)) {
+            isAnswerCorrect = true;
             handleCorrectAnswer(currentCard);
             if (autoAdvanceCheckbox.checked) setTimeout(proceedToNextCard, 1500);
             else continueButton.style.display = 'inline-block';
+            answerInput.blur();
         } else {
+            isAnswerCorrect = false;
             handleIncorrectAnswer(currentCard);
             continueButton.style.display = 'inline-block';
+            answerInput.disabled = false;
+            isChecking = false;
+            answerInput.focus();
+            answerInput.select();
         }
-        answerInput.blur();
     }
 
     function proceedToNextCard() {
         currentCardIndex++;
         isChecking = false;
+        isAnswerCorrect = false;
         feedbackEl.innerHTML = '&nbsp;';
         feedbackEl.className = '';
         answerInput.disabled = false;
@@ -553,6 +564,22 @@ document.addEventListener('DOMContentLoaded', () => {
         localStorage.setItem(LANGUAGE_STORAGE_KEY, lang);
         languageSelect.value = lang;
         cardManager.updateDueCount();
+        updateLastUpdatedTime(lang); // Update the footer language
+    }
+
+    // --- Update Last Updated Time ---
+    function updateLastUpdatedTime(lang) {
+        const lastUpdatedElement = document.getElementById('last-updated');
+        if (lastUpdatedElement) {
+            const lastModified = new Date(document.lastModified);
+            // Fallback to 'en' if the language code is not available in translations
+            const currentLang = translations[lang] ? lang : 'en';
+            const locale = currentLang.replace('_', '-');
+            const options = { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' };
+            const dateString = lastModified.toLocaleDateString(locale, options);
+            const label = translations[currentLang].lastUpdatedLabel;
+            lastUpdatedElement.textContent = `${label} ${dateString}`;
+        }
     }
     
     // --- Create and inject Cram Button ---
@@ -636,7 +663,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (event.key === 'Enter' && continueButton.style.display !== 'none') {
             event.preventDefault();
-            proceedToNextCard();
+            if (isAnswerCorrect) {
+                proceedToNextCard();
+            }
         }
     });
 
