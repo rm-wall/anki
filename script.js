@@ -9,7 +9,8 @@ document.addEventListener('DOMContentLoaded', () => {
             instructions: '每行一个词条，格式为：<b>问题, 答案1, 答案2...</b>，例如：',
             dropZoneLabel: '将文件拖放到此处，或点击选择文件',
             randomOrderLabel: '随机顺序',
-            startButton: '开始学习 ({dueCount})',
+            smartReviewButton: '智能复习 ({dueCount})',
+            cramButton: '自由复习',
             reviewing: '学习中...', 
             showAllCardsButton: '查看所有卡片',
             clearCacheButton: '清空缓存',
@@ -28,6 +29,7 @@ document.addEventListener('DOMContentLoaded', () => {
             incorrectFeedback: '错误! 答案: {answers}',
             emptyListAlert: '单词列表为空或格式不正确。',
             noDueCards: '今日无待复习卡片！',
+            noCardsToCram: '没有可供自由复习的卡片。',
             autoAdvanceLabel: '自动跳到下一题',
             cardQuestion: '问题',
             cardAnswers: '答案',
@@ -56,7 +58,8 @@ document.addEventListener('DOMContentLoaded', () => {
             instructions: 'One entry per line, format: <b>Question, Answer 1, Answer 2...</b>, e.g.:',
             dropZoneLabel: 'Drag and drop a file here, or click to select a file',
             randomOrderLabel: 'Random Order',
-            startButton: 'Start Learning ({dueCount})',
+            smartReviewButton: 'Smart Review ({dueCount})',
+            cramButton: 'Cram Session',
             reviewing: 'Reviewing...', 
             showAllCardsButton: 'View All Cards',
             clearCacheButton: 'Clear Cache',
@@ -75,6 +78,7 @@ document.addEventListener('DOMContentLoaded', () => {
             incorrectFeedback: 'Incorrect! The answer is: {answers}',
             emptyListAlert: 'The word list is empty or formatted incorrectly.',
             noDueCards: 'No cards due for review today!',
+            noCardsToCram: 'There are no cards available to cram.',
             autoAdvanceLabel: 'Auto-advance to next question',
             cardQuestion: 'Question',
             cardAnswers: 'Answers',
@@ -103,7 +107,8 @@ document.addEventListener('DOMContentLoaded', () => {
             instructions: '各行に1つのエントリ、形式：<b>問題, 答え1, 答え2...</b>、例：',
             dropZoneLabel: 'ここにファイルをドラッグ＆ドロップするか、クリックしてファイルを選択します',
             randomOrderLabel: 'ランダムな順序',
-            startButton: '学習開始 ({dueCount})',
+            smartReviewButton: 'スマートレビュー ({dueCount})',
+            cramButton: '集中学習',
             reviewing: '復習中...', 
             showAllCardsButton: '全カード表示',
             clearCacheButton: 'キャッシュをクリア',
@@ -122,6 +127,7 @@ document.addEventListener('DOMContentLoaded', () => {
             incorrectFeedback: '不正解！答えは: {answers}',
             emptyListAlert: '単語リストが空か、形式が正しくありません。',
             noDueCards: '今日レビューするカードはありません！',
+            noCardsToCram: '集中学習できるカードがありません。',
             autoAdvanceLabel: '正解の場合、自動的に次に進む',
             cardQuestion: '問題',
             cardAnswers: '答え',
@@ -157,7 +163,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const restartButton = document.getElementById('restart-button');
     const terminateButton = document.getElementById('terminate-button');
     const showErrorsButton = document.getElementById('show-errors-button');
-    const practiceErrorsButton = document.getElementById('practice-errors-button');
     const clearCacheButton = document.getElementById('clear-cache-button');
     const continueButton = document.getElementById('continue-button');
     const randomOrderCheckbox = document.getElementById('random-order-checkbox');
@@ -171,6 +176,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const errorModal = document.getElementById('error-modal');
     const closeModalButton = document.querySelector('.close-button');
     const modalIncorrectListEl = document.getElementById('modal-incorrect-list');
+    // New button will be created dynamically, but we need a placeholder in the HTML
+    let cramButton; 
 
     // --- App State ---
     let sessionCards = [];
@@ -179,6 +186,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let sessionIncorrectCount = 0;
     let sessionIncorrectCards = [];
     let isChecking = false;
+    let isCramming = false; // New state for cram mode
     let allCards = new Map();
 
     // --- Storage Keys ---
@@ -228,7 +236,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         efactor: 2.5,
                         interval: 0,
                         nextReviewDate: cardManager.getTodayDateString(),
-                        isSuspended: false, // New property
+                        isSuspended: false,
                     });
                 }
             });
@@ -246,6 +254,10 @@ document.addEventListener('DOMContentLoaded', () => {
         getDueCards: () => {
             const today = cardManager.getTodayDateString();
             return Array.from(allCards.values()).filter(card => !card.isSuspended && card.nextReviewDate <= today);
+        },
+        
+        getAllActiveCards: () => {
+            return Array.from(allCards.values()).filter(card => !card.isSuspended);
         },
 
         update: (cardId, isCorrect) => {
@@ -286,7 +298,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const card = allCards.get(cardId);
             if (card) {
                 card.isSuspended = false;
-                card.nextReviewDate = cardManager.getTodayDateString(); // Make it due today
+                card.nextReviewDate = cardManager.getTodayDateString();
                 cardManager.save();
                 cardManager.updateDueCount();
             }
@@ -295,24 +307,27 @@ document.addEventListener('DOMContentLoaded', () => {
         updateDueCount: () => {
             const dueCount = cardManager.getDueCards().length;
             const lang = languageSelect.value;
-            const template = translations[lang].startButton || 'Start Learning ({dueCount})';
+            const template = translations[lang].smartReviewButton || 'Smart Review ({dueCount})';
             startButton.textContent = template.replace('{dueCount}', dueCount);
             startButton.disabled = dueCount === 0;
+            
+            if (cramButton) {
+                cramButton.disabled = cardManager.getAllActiveCards().length === 0;
+            }
         }
     };
 
     // --- Game Flow Functions ---
-    function initializeGame() {
-        cardManager.syncFromTextarea();
-        sessionCards = cardManager.getDueCards();
-
-        if (sessionCards.length === 0) {
-            alert(translations[languageSelect.value].noDueCards);
+    function startSession(cards) {
+        if (cards.length === 0) {
+            const alertKey = isCramming ? 'noCardsToCram' : 'noDueCards';
+            alert(translations[languageSelect.value][alertKey]);
             return;
         }
 
-        if (randomOrderCheckbox.checked) shuffle(sessionCards);
-
+        if (randomOrderCheckbox.checked) shuffle(cards); 
+        
+        sessionCards = cards;
         currentCardIndex = 0;
         sessionCorrectCount = 0;
         sessionIncorrectCount = 0;
@@ -327,6 +342,18 @@ document.addEventListener('DOMContentLoaded', () => {
         continueButton.style.display = 'none';
         
         displayNextCard();
+    }
+
+    function startSmartReview() {
+        isCramming = false;
+        cardManager.syncFromTextarea();
+        startSession(cardManager.getDueCards());
+    }
+
+    function startCramSession() {
+        isCramming = true;
+        cardManager.syncFromTextarea();
+        startSession(cardManager.getAllActiveCards());
     }
 
     function displayNextCard() {
@@ -394,7 +421,9 @@ document.addEventListener('DOMContentLoaded', () => {
         feedbackEl.textContent = feedbackText.replace('{answers}', card.answers.join(' / '));
         feedbackEl.className = 'correct';
         sessionCorrectCount++;
-        cardManager.update(card.id, true);
+        if (!isCramming) { // Only update SRS data in smart review mode
+            cardManager.update(card.id, true);
+        }
     }
 
     function handleIncorrectAnswer(card) {
@@ -405,7 +434,9 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!sessionIncorrectCards.some(c => c.id === card.id)) {
             sessionIncorrectCards.push(card);
         }
-        cardManager.update(card.id, false);
+        if (!isCramming) { // Only update SRS data in smart review mode
+            cardManager.update(card.id, false);
+        }
     }
 
     // --- UI and Utility Functions ---
@@ -484,7 +515,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function showAllCardsModal() {
-        renderAllCardsModal('active'); // Always show active cards first
+        renderAllCardsModal('active');
         errorModal.style.display = 'block';
     }
 
@@ -523,13 +554,24 @@ document.addEventListener('DOMContentLoaded', () => {
         languageSelect.value = lang;
         cardManager.updateDueCount();
     }
+    
+    // --- Create and inject Cram Button ---
+    function setupButtons() {
+        startButton.setAttribute('data-i18n', 'smartReviewButton');
+        
+        cramButton = document.createElement('button');
+        cramButton.id = 'cram-button';
+        cramButton.setAttribute('data-i18n', 'cramButton');
+        startButton.parentNode.insertBefore(cramButton, startButton.nextSibling);
+
+        startButton.addEventListener('click', startSmartReview);
+        cramButton.addEventListener('click', startCramSession);
+    }
 
     // --- Event Listeners ---
     languageSelect.addEventListener('change', (event) => setLanguage(event.target.value));
-    startButton.addEventListener('click', initializeGame);
     showErrorsButton.addEventListener('click', showAllCardsModal);
-    if(practiceErrorsButton) practiceErrorsButton.style.display = 'none';
-
+    
     clearCacheButton.addEventListener('click', () => {
         if (confirm(translations[languageSelect.value].confirmClearCache)) {
             localStorage.clear();
@@ -555,7 +597,6 @@ document.addEventListener('DOMContentLoaded', () => {
         cardManager.syncFromTextarea();
     });
 
-    // Delegated event listener for modal actions
     modalIncorrectListEl.addEventListener('click', (event) => {
         const target = event.target;
         if (target.matches('.tab-btn')) {
@@ -571,7 +612,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // File import listeners
     fileDropZone.addEventListener('click', () => fileInput.click());
     const containerEl = document.querySelector('.container');
     ['dragover', 'dragleave', 'drop'].forEach(eventName => {
@@ -590,8 +630,19 @@ document.addEventListener('DOMContentLoaded', () => {
         if (event.target.files.length > 0) handleFile(event.target.files[0]);
     });
 
+    // --- Global Keydown Listener ---
+    document.addEventListener('keydown', (event) => {
+        if (errorModal.style.display === 'block') return;
+
+        if (event.key === 'Enter' && continueButton.style.display !== 'none') {
+            event.preventDefault();
+            proceedToNextCard();
+        }
+    });
+
     // --- Initialization ---
     function init() {
+        setupButtons();
         const savedWordList = localStorage.getItem(WORD_LIST_STORAGE_KEY);
         if (savedWordList) wordListInput.value = savedWordList;
 
