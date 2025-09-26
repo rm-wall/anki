@@ -422,18 +422,29 @@ document.addEventListener('DOMContentLoaded', () => {
     // File import listeners
     fileDropZone.addEventListener('click', () => fileInput.click());
 
-    fileDropZone.addEventListener('dragover', (event) => {
+    const containerEl = document.querySelector('.container');
+
+    // Prevent browser from opening the file by default
+    window.addEventListener('dragover', (event) => {
         event.preventDefault();
-        fileDropZone.classList.add('dragover');
     });
 
-    fileDropZone.addEventListener('dragleave', () => {
-        fileDropZone.classList.remove('dragover');
+    window.addEventListener('drop', (event) => {
+        event.preventDefault();
     });
 
-    fileDropZone.addEventListener('drop', (event) => {
+    containerEl.addEventListener('dragover', (event) => {
         event.preventDefault();
-        fileDropZone.classList.remove('dragover');
+        containerEl.classList.add('dragover');
+    });
+
+    containerEl.addEventListener('dragleave', () => {
+        containerEl.classList.remove('dragover');
+    });
+
+    containerEl.addEventListener('drop', (event) => {
+        event.preventDefault();
+        containerEl.classList.remove('dragover');
         const files = event.dataTransfer.files;
         if (files.length > 0) {
             handleFile(files[0]);

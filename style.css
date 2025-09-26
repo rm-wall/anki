@@ -99,9 +99,8 @@ h1 {
     color: #666;
 }
 
-#file-drop-zone.dragover {
-    border-color: #007aff;
-    background-color: #f0f8ff;
+.container.dragover {
+    box-shadow: 0 0 0 4px #007aff;
 }
 
 .order-option {
