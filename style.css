@@ -150,14 +150,20 @@ button:disabled {
 }
 
 
+.button-group {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+}
+
+.button-group button {
+    margin-top: 10px;
+}
+
 /* Styles for Terminate and Show Errors buttons */
 #terminate-button, #show-errors-button, #practice-errors-button {
     background-color: #8e8e93; /* A neutral grey */
-    margin-top: 10px;
-}
-#start-button + #show-errors-button,
-#show-errors-button + #practice-errors-button {
-    margin-left: 10px;
 }
 
 #terminate-button:hover, #show-errors-button:hover {

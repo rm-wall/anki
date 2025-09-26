@@ -22,12 +22,12 @@
         <div id="setup">
             <h2 data-i18n="listHeading">输入单词列表</h2>
             <p data-i18n="instructions">每行一个词条，格式为：<b>问题, 答案1, 答案2...</b>，例如：</p>
-            <p><code>武器,ぶき,buki</code></p>
+            <p><code>桜,さくら,sakura</code></p>
             <div id="file-drop-zone">
                 <p data-i18n="dropZoneLabel">将文件拖放到此处，或点击选择文件</p>
                 <input type="file" id="file-input" accept=".txt,.csv" style="display: none;">
             </div>
-            <textarea id="word-list-input" rows="10">武器,ぶき,buki
+            <textarea id="word-list-input" rows="10">桜,さくら,sakura
 車,くるま,kuruma
 猫,ねこ,neko
 犬,いぬ,inu
@@ -38,9 +38,12 @@
                 <input type="checkbox" id="random-order-checkbox" checked>
                 <label for="random-order-checkbox" data-i18n="randomOrderLabel">随机顺序</label>
             </div>
-            <button id="start-button" data-i18n="startButton">开始学习</button>
-            <button id="show-errors-button" data-i18n="showErrorsButton">查看错题</button>
-            <button id="practice-errors-button" data-i18n="practiceErrorsButton">练习错题</button>
+            <div class="button-group">
+                <button id="start-button" data-i18n="startButton">开始学习</button>
+                <button id="show-errors-button" data-i18n="showErrorsButton">查看错题</button>
+                <button id="practice-errors-button" data-i18n="practiceErrorsButton">练习错题</button>
+                <button id="clear-cache-button" data-i18n="clearCacheButton">清空缓存</button>
+            </div>
         </div>
 
         <div id="card" style="display: none;">

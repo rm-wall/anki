@@ -16,6 +16,9 @@ document.addEventListener('DOMContentLoaded', () => {
             startButton: '开始学习',
             showErrorsButton: '查看错题',
             practiceErrorsButton: '练习错题',
+            clearCacheButton: '清空缓存',
+            cacheClearedAlert: '缓存已清空！',
+            confirmClearCache: '确定要清空所有本地数据吗？这将删除所有错题记录、保存的单词列表和语言设置。此操作不可撤销。',
             answerPlaceholder: '输入答案后按回车',
             continueButton: '继续',
             terminateButton: '终止测验',
@@ -43,6 +46,9 @@ document.addEventListener('DOMContentLoaded', () => {
             startButton: 'Start Learning',
             showErrorsButton: 'View Incorrect',
             practiceErrorsButton: 'Practice Incorrect',
+            clearCacheButton: 'Clear Cache',
+            cacheClearedAlert: 'Cache cleared!',
+            confirmClearCache: 'Are you sure you want to clear all local data? This will delete all incorrect word history, saved word lists, and language settings. This action cannot be undone.',
             answerPlaceholder: 'Type answer and press Enter',
             continueButton: 'Continue',
             terminateButton: 'End Test',
@@ -70,6 +76,9 @@ document.addEventListener('DOMContentLoaded', () => {
             startButton: '学習開始',
             showErrorsButton: '間違いを確認',
             practiceErrorsButton: '間違いを練習',
+            clearCacheButton: 'キャッシュをクリア',
+            cacheClearedAlert: 'キャッシュがクリアされました！',
+            confirmClearCache: '本当にすべてのローカルデータをクリアしますか？これには、すべての間違い記録、保存された単語リスト、言語設定が含まれます。この操作は元に戻せません。',
             answerPlaceholder: '答えを入力してEnterキーを押す',
             continueButton: '次へ',
             terminateButton: 'テスト終了',
@@ -100,6 +109,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const terminateButton = document.getElementById('terminate-button');
     const showErrorsButton = document.getElementById('show-errors-button');
     const practiceErrorsButton = document.getElementById('practice-errors-button');
+    const clearCacheButton = document.getElementById('clear-cache-button');
     const continueButton = document.getElementById('continue-button');
     const randomOrderCheckbox = document.getElementById('random-order-checkbox');
     const fileDropZone = document.getElementById('file-drop-zone');
@@ -329,6 +339,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const hasIncorrectWords = incorrectWords.length > 0;
         showErrorsButton.disabled = !hasIncorrectWords;
         practiceErrorsButton.disabled = !hasIncorrectWords;
+        clearCacheButton.disabled = !hasIncorrectWords;
     }
 
     function shuffle(array) {
@@ -372,6 +383,13 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     startButton.addEventListener('click', initializeGame);
     practiceErrorsButton.addEventListener('click', startPracticeGame);
+    clearCacheButton.addEventListener('click', () => {
+        if (confirm(translations[languageSelect.value].confirmClearCache)) {
+            localStorage.clear();
+            alert(translations[languageSelect.value].cacheClearedAlert);
+            location.reload();
+        }
+    });
     continueButton.addEventListener('click', proceedToNextWord);
     answerInput.addEventListener('keydown', (event) => {
         if (event.key === 'Enter') {
