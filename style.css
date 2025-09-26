@@ -206,18 +206,23 @@ button:disabled {
     height: 100%;
     overflow: auto; /* Enable scroll if needed */
     background-color: rgba(0,0,0,0.5); /* Black w/ opacity */
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .modal-content {
     background-color: #fefefe;
-    margin: 10% auto; /* Adjusted margin for better centering */
     padding: 20px;
     border: 1px solid #888;
     width: 90%; /* Responsive width */
+    height: 90%; /* Responsive height */
     max-width: 1100px; /* Max width for larger screens */
     border-radius: 10px;
     position: relative;
     text-align: left;
+    display: flex;
+    flex-direction: column;
 }
 
 .close-button {
@@ -239,8 +244,8 @@ button:disabled {
     border-radius: 5px;
     padding: 10px;
     margin-top: 10px;
-    max-height: 400px; /* Increased height */
     overflow-y: auto;
+    flex-grow: 1; /* Allow this element to grow */
 }
 
 /* --- Card Status Table Styles --- */
@@ -269,6 +274,13 @@ button:disabled {
 
 .cards-table tr:hover {
     background-color: #e9e9e9;
+}
+
+.status-new,
+.status-due,
+.status-review,
+.status-suspended {
+    white-space: nowrap;
 }
 
 .status-new {
