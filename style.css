@@ -280,9 +280,6 @@ button:disabled {
 .modal-io-buttons {
     display: flex;
     gap: 10px;
-    margin-top: 10px;
-    padding-bottom: 10px;
-    border-bottom: 1px solid #eee;
 }
 
 #export-cards-button, #import-cards-button {
@@ -445,7 +442,13 @@ button:disabled {
     border-bottom: 1px solid #ccc;
     margin-bottom: 10px;
     display: flex;
-    gap: 20px; /* Increased gap between the two groups */
+    justify-content: space-between; /* Replaces gap for alignment */
+    align-items: center;
+}
+
+.modal-toolbar-left {
+    display: flex;
+    gap: 20px;
     align-items: center;
 }
 

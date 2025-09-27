@@ -256,9 +256,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const lapseIntervalValueInput = document.getElementById('setting-lapse-interval-value');
     const lapseIntervalUnitInput = document.getElementById('setting-lapse-interval-unit');
     const settingsModalCloseButton = settingsModal.querySelector('.close-button');
-    const exportCardsButton = document.getElementById('export-cards-button');
-    const importCardsButton = document.getElementById('import-cards-button');
-    const importCardsInput = document.getElementById('import-cards-input');
 
     // New button will be created dynamically, but we need a placeholder in the HTML
     let cramButton;
@@ -722,19 +719,31 @@ document.addEventListener('DOMContentLoaded', () => {
                 }).join('') + `</tbody>`;
         }
 
-        const tabs = `
+        const ioButtonsHTML = viewType === 'all'
+            ? `
+            <div class="modal-io-buttons">
+                <button id="export-cards-button" data-i18n="exportButton">${t('exportButton', 'Export')}</button>
+                <button id="import-cards-button" data-i18n="importButton">${t('importButton', 'Import')}</button>
+                <input type="file" id="import-cards-input" accept=".txt,.json" style="display: none;">
+            </div>`
+            : '';
+
+        const toolbarHTML = `
             <div class="modal-toolbar">
-                <div class="view-tabs">
-                    <button class="tab-btn ${viewType === 'current' ? 'active' : ''}" data-view="current">${t('currentListCards', 'Current List')}</button>
-                    <button class="tab-btn ${viewType === 'all' ? 'active' : ''}" data-view="all">${t('allTimeCards', 'All Cards')}</button>
+                <div class="modal-toolbar-left">
+                    <div class="view-tabs">
+                        <button class="tab-btn ${viewType === 'current' ? 'active' : ''}" data-view="current">${t('currentListCards', 'Current List')}</button>
+                        <button class="tab-btn ${viewType === 'all' ? 'active' : ''}" data-view="all">${t('allTimeCards', 'All Cards')}</button>
+                    </div>
+                    <div class="filter-tabs">
+                        <button class="tab-btn ${filterType === 'active' ? 'active' : ''}" data-filter="active">${t('activeCards', 'Active Cards')}</button>
+                        <button class="tab-btn ${filterType === 'suspended' ? 'active' : ''}" data-filter="suspended">${t('suspendedCards', 'Suspended')}</button>
+                    </div>
                 </div>
-                <div class="filter-tabs">
-                    <button class="tab-btn ${filterType === 'active' ? 'active' : ''}" data-filter="active">${t('activeCards', 'Active Cards')}</button>
-                    <button class="tab-btn ${filterType === 'suspended' ? 'active' : ''}" data-filter="suspended">${t('suspendedCards', 'Suspended')}</button>
-                </div>
+                ${ioButtonsHTML}
             </div>`;
 
-        modalIncorrectListEl.innerHTML = `${tabs}<table class="cards-table">${tableHeader}${tableBody}</table>`;
+        modalIncorrectListEl.innerHTML = `${toolbarHTML}<table class="cards-table">${tableHeader}${tableBody}</table>`;
     }
 
     function showAllCardsModal() {
@@ -762,7 +771,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- I/O Functions ---
     function exportCards() {
         const data = localStorage.getItem(CARDS_STORAGE_KEY);
-        if (!data) {
+        if (!data || data === '[]') {
             alert('No card data to export.');
             return;
         }
@@ -957,10 +966,24 @@ document.addEventListener('DOMContentLoaded', () => {
         if (event.target.files.length > 0) handleFile(event.target.files[0]);
     });
 
-    // I/O Button Listeners
-    exportCardsButton.addEventListener('click', exportCards);
-    importCardsButton.addEventListener('click', () => importCardsInput.click());
-    importCardsInput.addEventListener('change', importCards);
+    // Delegated I/O listeners on the modal
+    errorModal.addEventListener('click', (event) => {
+        if (event.target.matches('#export-cards-button')) {
+            exportCards();
+        }
+        if (event.target.matches('#import-cards-button')) {
+            // Find the input within the modal and click it
+            const importInput = errorModal.querySelector('#import-cards-input');
+            if (importInput) {
+                importInput.click();
+            }
+        }
+    });
+    errorModal.addEventListener('change', (event) => {
+        if (event.target.matches('#import-cards-input')) {
+            importCards(event);
+        }
+    });
 
 
     // Settings Modal Listeners
