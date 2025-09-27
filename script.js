@@ -69,8 +69,8 @@ document.addEventListener('DOMContentLoaded', () => {
             dangerZoneHeading: '危险区域',
             exportButton: '导出词表',
             importButton: '导入词表',
-            confirmImport: '确定要导入新的单词列表吗？这将覆盖文本框中的现有列表，但会保留已存在的卡片进度。',
-            importSuccess: '词表导入成功！列表已更新。',
+            confirmImport: '确定要导入新的单词列表吗？这只会添加文件中不存在的新卡片，不会影响文本框中的列表。',
+            importSuccess: '词表导入成功！{count}张新卡片已添加。',
             importFailed: '导入失败。请检查文件是否为纯文本格式。'
         },
         'en': {
@@ -141,8 +141,8 @@ document.addEventListener('DOMContentLoaded', () => {
             dangerZoneHeading: 'Danger Zone',
             exportButton: 'Export List',
             importButton: 'Import List',
-            confirmImport: 'Are you sure you want to import a new word list? This will overwrite the current list in the textarea but will preserve existing card progress.',
-            importSuccess: 'Word list imported successfully! The list has been updated.',
+            confirmImport: 'Are you sure you want to import a new word list? This will only add new cards from the file that do not already exist and will not affect the list in the textarea.',
+            importSuccess: 'Word list imported successfully! {count} new cards have been added.',
             importFailed: 'Import failed. Please ensure the file is a plain text file.'
         },
         'ja': {
@@ -213,8 +213,8 @@ document.addEventListener('DOMContentLoaded', () => {
             dangerZoneHeading: '危険区域',
             exportButton: 'リストをエクスポート',
             importButton: 'リストをインポート',
-            confirmImport: '新しい単語リストをインポートしてもよろしいですか？これにより、テキストエリア内の現在のリストが上書きされますが、既存のカードの進捗は保持されます。',
-            importSuccess: '単語リストが正常にインポートされました！リストが更新されました。',
+            confirmImport: '新しい単語リストをインポートしてもよろしいですか？これにより、ファイルに存在する新しいカードのみが追加され、テキストエリアのリストには影響しません。',
+            importSuccess: '単語リストが正常にインポートされました！{count}枚の新しいカードが追加されました。',
             importFailed: 'インポートに失敗しました。ファイルがプレーンテキスト形式であることを確認してください。'
         }
     };
@@ -356,6 +356,40 @@ document.addEventListener('DOMContentLoaded', () => {
 
             cardManager.save();
             cardManager.updateDueCount();
+        },
+
+        importFromText: (text) => {
+            const lines = text.split('\n');
+            let newCardsAdded = 0;
+
+            if (text) {
+                lines.forEach(line => {
+                    const parts = line.split(',').map(part => part.trim()).filter(part => part);
+                    if (parts.length < 2) return;
+
+                    const id = parts.join(',');
+
+                    if (!allCards.has(id)) {
+                        allCards.set(id, {
+                            id: id,
+                            question: parts[0],
+                            answers: parts,
+                            repetitions: 0,
+                            efactor: 2.5,
+                            interval: 0,
+                            nextReviewDate: cardManager.getNowISO(),
+                            isSuspended: false,
+                        });
+                        newCardsAdded++;
+                    }
+                });
+            }
+
+            if (newCardsAdded > 0) {
+                cardManager.save();
+                cardManager.updateDueCount();
+            }
+            return newCardsAdded;
         },
 
         getDueCards: () => {
@@ -796,10 +830,9 @@ document.addEventListener('DOMContentLoaded', () => {
             const content = e.target.result;
             if (confirm(translations[languageSelect.value].confirmImport)) {
                 try {
-                    wordListInput.value = content;
-                    localStorage.setItem(WORD_LIST_STORAGE_KEY, content);
-                    cardManager.syncFromTextarea();
-                    alert(translations[languageSelect.value].importSuccess);
+                    const newCardsCount = cardManager.importFromText(content);
+                    const successMsgTemplate = translations[languageSelect.value].importSuccess;
+                    alert(successMsgTemplate.replace('{count}', newCardsCount));
 
                     // Re-render the modal, forcing it to show the 'all' view to reflect the import.
                     const activeFilterBtn = modalIncorrectListEl.querySelector('.tab-btn[data-filter].active');
