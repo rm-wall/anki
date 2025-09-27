@@ -265,6 +265,25 @@ document.addEventListener('DOMContentLoaded', () => {
         load: () => {
             const storedCards = JSON.parse(localStorage.getItem(CARDS_STORAGE_KEY) || '[]');
             allCards = new Map(storedCards.map(card => [card.id, card]));
+
+            // --- One-time Data Migration ---
+            let needsSave = false;
+            allCards.forEach(card => {
+                // If date is in old YYYY-MM-DD format, convert it.
+                if (card.nextReviewDate && !card.nextReviewDate.includes('T')) {
+                    card.nextReviewDate = cardManager.getNowISO();
+                    // Also reset interval to be in minutes, assuming old intervals were in days.
+                    // This makes it compatible with the new system. A value of 0 is safe.
+                    card.interval = 0; 
+                    needsSave = true;
+                }
+            });
+
+            if (needsSave) {
+                cardManager.save();
+            }
+            // --- End Migration ---
+
             cardManager.updateDueCount();
         },
 
