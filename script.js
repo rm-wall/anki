@@ -70,7 +70,7 @@ document.addEventListener('DOMContentLoaded', () => {
             exportButton: '导出词表',
             importButton: '导入词表',
             confirmImport: '确定要导入新的单词列表吗？这将覆盖文本框中的现有列表，但会保留已存在的卡片进度。',
-            importSuccess: '词表导入成功！页面将刷新以应用更改。',
+            importSuccess: '词表导入成功！列表已更新。',
             importFailed: '导入失败。请检查文件是否为纯文本格式。'
         },
         'en': {
@@ -142,7 +142,7 @@ document.addEventListener('DOMContentLoaded', () => {
             exportButton: 'Export List',
             importButton: 'Import List',
             confirmImport: 'Are you sure you want to import a new word list? This will overwrite the current list in the textarea but will preserve existing card progress.',
-            importSuccess: 'Word list imported successfully! The page will reload to apply changes.',
+            importSuccess: 'Word list imported successfully! The list has been updated.',
             importFailed: 'Import failed. Please ensure the file is a plain text file.'
         },
         'ja': {
@@ -214,7 +214,7 @@ document.addEventListener('DOMContentLoaded', () => {
             exportButton: 'リストをエクスポート',
             importButton: 'リストをインポート',
             confirmImport: '新しい単語リストをインポートしてもよろしいですか？これにより、テキストエリア内の現在のリストが上書きされますが、既存のカードの進捗は保持されます。',
-            importSuccess: '単語リストが正常にインポートされました！ページがリロードされ、変更が適用されます。',
+            importSuccess: '単語リストが正常にインポートされました！リストが更新されました。',
             importFailed: 'インポートに失敗しました。ファイルがプレーンテキスト形式であることを確認してください。'
         }
     };
