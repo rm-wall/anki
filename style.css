@@ -499,3 +499,7 @@ button:disabled {
 #cram-button:hover {
     background-color: #3d3b9e;
 }
+
+#summary #restart-button {
+    margin-top: 20px;
+}
