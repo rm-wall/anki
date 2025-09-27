@@ -41,7 +41,7 @@
             <div class="button-group">
                 <button id="start-button" data-i18n="startButton">开始学习</button>
                 <button id="show-errors-button" data-i18n="showAllCardsButton">查看所有卡片</button>
-                <button id="clear-cache-button" data-i18n="clearCacheButton">清空缓存</button>
+                <button id="settings-button" data-i18n="settingsButton">设置</button>
             </div>
         </div>
 
@@ -76,6 +76,56 @@
             <span class="close-button">&times;</span>
             <h2 data-i18n="allCardsModalHeading">所有卡片状态</h2>
             <div id="modal-incorrect-list"></div>
+        </div>
+    </div>
+
+    <div id="settings-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-button">&times;</span>
+            <h2 data-i18n="settingsModalHeading">算法参数设置</h2>
+            <div class="settings-form">
+                <div class="settings-form-group">
+                    <label for="setting-initial-interval-value" data-i18n="initialIntervalLabel">初次答对后间隔</label>
+                    <div class="input-group">
+                        <input type="number" id="setting-initial-interval-value" min="1">
+                        <select id="setting-initial-interval-unit">
+                            <option value="minutes" data-i18n="minutes">分钟</option>
+                            <option value="hours" data-i18n="hours">小时</option>
+                            <option value="days" data-i18n="days">天</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="settings-form-group">
+                    <label for="setting-second-interval-value" data-i18n="secondIntervalLabel">再次答对后间隔</label>
+                    <div class="input-group">
+                        <input type="number" id="setting-second-interval-value" min="1">
+                        <select id="setting-second-interval-unit">
+                            <option value="minutes" data-i18n="minutes">分钟</option>
+                            <option value="hours" data-i18n="hours">小时</option>
+                            <option value="days" data-i18n="days">天</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="settings-form-group">
+                    <label for="setting-lapse-interval-value" data-i18n="lapseIntervalLabel">答错后间隔</label>
+                    <div class="input-group">
+                        <input type="number" id="setting-lapse-interval-value" min="1">
+                        <select id="setting-lapse-interval-unit">
+                            <option value="minutes" data-i18n="minutes">分钟</option>
+                            <option value="hours" data-i18n="hours">小时</option>
+                            <option value="days" data-i18n="days">天</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-button-group">
+                <button id="save-settings-button" data-i18n="saveButton">保存</button>
+                <button id="reset-settings-button" data-i18n="resetButton">恢复默认</button>
+            </div>
+            <div class="settings-danger-zone">
+                <h3 data-i18n="dangerZoneHeading">危险区域</h3>
+                <button id="clear-cache-button" data-i18n="clearCacheButton">清空所有本地数据</button>
+            </div>
         </div>
     </div>
 

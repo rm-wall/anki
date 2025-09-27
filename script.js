@@ -51,7 +51,18 @@ document.addEventListener('DOMContentLoaded', () => {
             suspendedCards: '已暂停',
             currentListCards: '当前列表',
             allTimeCards: '所有卡片',
-            lastUpdatedLabel: '最后更新于：'
+            lastUpdatedLabel: '最后更新于：',
+            settingsButton: '设置',
+            settingsModalHeading: '算法参数设置',
+            initialIntervalLabel: '初次答对后间隔',
+            secondIntervalLabel: '再次答对后间隔',
+            lapseIntervalLabel: '答错后间隔',
+            saveButton: '保存',
+            resetButton: '恢复默认',
+            minutes: '分钟',
+            hours: '小时',
+            days: '天',
+            dangerZoneHeading: '危险区域'
         },
         'en': {
             title: 'Anki Program',
@@ -103,7 +114,18 @@ document.addEventListener('DOMContentLoaded', () => {
             suspendedCards: 'Suspended',
             currentListCards: 'Current List',
             allTimeCards: 'All Cards',
-            lastUpdatedLabel: 'Last updated:'
+            lastUpdatedLabel: 'Last updated:',
+            settingsButton: 'Settings',
+            settingsModalHeading: 'Algorithm Parameters',
+            initialIntervalLabel: 'Interval after 1st correct',
+            secondIntervalLabel: 'Interval after 2nd correct',
+            lapseIntervalLabel: 'Interval after incorrect',
+            saveButton: 'Save',
+            resetButton: 'Reset to Defaults',
+            minutes: 'Minutes',
+            hours: 'Hours',
+            days: 'Days',
+            dangerZoneHeading: 'Danger Zone'
         },
         'ja': {
             title: '暗記プログラム',
@@ -155,7 +177,18 @@ document.addEventListener('DOMContentLoaded', () => {
             suspendedCards: '一時停止中',
             currentListCards: '現在のリスト',
             allTimeCards: '全カード',
-            lastUpdatedLabel: '最終更新日：'
+            lastUpdatedLabel: '最終更新日：',
+            settingsButton: '設定',
+            settingsModalHeading: 'アルゴリズムパラメータ設定',
+            initialIntervalLabel: '初回正解後の間隔',
+            secondIntervalLabel: '2回目正解後の間隔',
+            lapseIntervalLabel: '不正解後の間隔',
+            saveButton: '保存',
+            resetButton: 'デフォルトに戻す',
+            minutes: '分',
+            hours: '時間',
+            days: '日',
+            dangerZoneHeading: '危険区域'
         }
     };
 
@@ -185,6 +218,18 @@ document.addEventListener('DOMContentLoaded', () => {
     const errorModal = document.getElementById('error-modal');
     const closeModalButton = document.querySelector('.close-button');
     const modalIncorrectListEl = document.getElementById('modal-incorrect-list');
+    const settingsModal = document.getElementById('settings-modal');
+    const settingsButton = document.getElementById('settings-button');
+    const saveSettingsButton = document.getElementById('save-settings-button');
+    const resetSettingsButton = document.getElementById('reset-settings-button');
+    const initialIntervalValueInput = document.getElementById('setting-initial-interval-value');
+    const initialIntervalUnitInput = document.getElementById('setting-initial-interval-unit');
+    const secondIntervalValueInput = document.getElementById('setting-second-interval-value');
+    const secondIntervalUnitInput = document.getElementById('setting-second-interval-unit');
+    const lapseIntervalValueInput = document.getElementById('setting-lapse-interval-value');
+    const lapseIntervalUnitInput = document.getElementById('setting-lapse-interval-unit');
+    const settingsModalCloseButton = settingsModal.querySelector('.close-button');
+
     // New button will be created dynamically, but we need a placeholder in the HTML
     let cramButton; 
 
@@ -194,19 +239,28 @@ document.addEventListener('DOMContentLoaded', () => {
     let sessionCorrectCount = 0;
     let sessionIncorrectCount = 0;
     let sessionIncorrectCards = [];
+    let reviewAgainPile = [];
     let isChecking = false;
     let isAnswerCorrect = false;
     let isCramming = false; // New state for cram mode
     let allCards = new Map();
+    let srsSettings = {};
+    const defaultSrsSettings = {
+        initialInterval: { value: 1, unit: 'days' },
+        secondInterval: { value: 6, unit: 'days' },
+        lapseInterval: { value: 10, unit: 'minutes' },
+    };
 
     // --- Storage Keys ---
     const CARDS_STORAGE_KEY = 'ankiCardsData';
     const WORD_LIST_STORAGE_KEY = 'wordListContent';
     const LANGUAGE_STORAGE_KEY = 'preferredLanguage';
+    const SETTINGS_STORAGE_KEY = 'ankiSrsSettings';
 
     // --- Spaced Repetition Logic ---
     const cardManager = {
-        getTodayDateString: () => new Date().toISOString().split('T')[0],
+        // All dates are now stored as full ISO strings for precision
+        getNowISO: () => new Date().toISOString(),
 
         load: () => {
             const storedCards = JSON.parse(localStorage.getItem(CARDS_STORAGE_KEY) || '[]');
@@ -238,8 +292,8 @@ document.addEventListener('DOMContentLoaded', () => {
                             answers: parts,
                             repetitions: 0,
                             efactor: 2.5,
-                            interval: 0,
-                            nextReviewDate: cardManager.getTodayDateString(),
+                            interval: 0, // Interval is now a duration in minutes
+                            nextReviewDate: cardManager.getNowISO(),
                             isSuspended: false,
                         });
                     }
@@ -259,8 +313,10 @@ document.addEventListener('DOMContentLoaded', () => {
         },
 
         getDueCards: () => {
-            const today = cardManager.getTodayDateString();
-            return Array.from(allCards.values()).filter(card => !card.isSuspended && card.nextReviewDate <= today);
+            const now = new Date();
+            return Array.from(allCards.values()).filter(card => 
+                !card.isSuspended && new Date(card.nextReviewDate) <= now
+            );
         },
         
         getAllActiveCards: () => {
@@ -271,14 +327,25 @@ document.addEventListener('DOMContentLoaded', () => {
             const card = allCards.get(cardId);
             if (!card) return;
 
+            const getNextIntervalInMinutes = (setting) => {
+                const { value, unit } = setting;
+                if (unit === 'days') return value * 24 * 60;
+                if (unit === 'hours') return value * 60;
+                return value; // minutes
+            };
+
             if (isCorrect) {
                 card.repetitions += 1;
-                if (card.repetitions === 1) card.interval = 1;
-                else if (card.repetitions === 2) card.interval = 6;
-                else card.interval = Math.ceil(card.interval * card.efactor);
+                if (card.repetitions === 1) {
+                    card.interval = getNextIntervalInMinutes(srsSettings.initialInterval);
+                } else if (card.repetitions === 2) {
+                    card.interval = getNextIntervalInMinutes(srsSettings.secondInterval);
+                } else {
+                    card.interval = Math.ceil(card.interval * card.efactor);
+                }
             } else {
                 card.repetitions = 0;
-                card.interval = 1;
+                card.interval = getNextIntervalInMinutes(srsSettings.lapseInterval);
             }
             
             const quality = isCorrect ? 5 : 1;
@@ -286,8 +353,8 @@ document.addEventListener('DOMContentLoaded', () => {
             if (card.efactor < 1.3) card.efactor = 1.3;
 
             const nextReview = new Date();
-            nextReview.setDate(nextReview.getDate() + card.interval);
-            card.nextReviewDate = nextReview.toISOString().split('T')[0];
+            nextReview.setMinutes(nextReview.getMinutes() + card.interval);
+            card.nextReviewDate = nextReview.toISOString();
             
             cardManager.save();
         },
@@ -305,7 +372,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const card = allCards.get(cardId);
             if (card) {
                 card.isSuspended = false;
-                card.nextReviewDate = cardManager.getTodayDateString();
+                card.nextReviewDate = cardManager.getNowISO();
                 cardManager.save();
                 cardManager.updateDueCount();
             }
@@ -339,6 +406,7 @@ document.addEventListener('DOMContentLoaded', () => {
         sessionCorrectCount = 0;
         sessionIncorrectCount = 0;
         sessionIncorrectCards = [];
+        reviewAgainPile = [];
 
         setupEl.style.display = 'none';
         summaryEl.style.display = 'none';
@@ -369,7 +437,16 @@ document.addEventListener('DOMContentLoaded', () => {
             answerInput.value = '';
             answerInput.focus();
         } else {
-            showSummary();
+            // End of a pass. Check if there are incorrect cards to review again.
+            if (!isCramming && reviewAgainPile.length > 0) {
+                sessionCards = [...reviewAgainPile];
+                reviewAgainPile = [];
+                currentCardIndex = 0;
+                if (randomOrderCheckbox.checked) shuffle(sessionCards);
+                displayNextCard(); // Start the next pass
+            } else {
+                showSummary(); // Session is truly over
+            }
         }
     }
 
@@ -448,6 +525,9 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!sessionIncorrectCards.some(c => c.id === card.id)) {
             sessionIncorrectCards.push(card);
         }
+        if (!isCramming && !reviewAgainPile.some(c => c.id === card.id)) {
+            reviewAgainPile.push(card);
+        }
         if (!isCramming) { // Only update SRS data in smart review mode
             cardManager.update(card.id, false);
         }
@@ -461,9 +541,30 @@ document.addEventListener('DOMContentLoaded', () => {
         cardManager.updateDueCount();
     }
 
+    function formatReviewDate(isoString, lang) {
+        const date = new Date(isoString);
+        const now = new Date();
+        const t = (key, fallback) => translations[lang][key] || fallback;
+
+        const isToday = date.getFullYear() === now.getFullYear() &&
+                      date.getMonth() === now.getMonth() &&
+                      date.getDate() === now.getDate();
+
+        if (date <= now) {
+            return t('statusDue', 'Due');
+        }
+        if (isToday) {
+            return t('today', 'Today') + ' ' + date.toLocaleTimeString(lang, { hour: '2-digit', minute: '2-digit' });
+        }
+        
+        return date.toLocaleString(lang, { 
+            year: 'numeric', month: 'short', day: 'numeric', 
+            hour: '2-digit', minute: '2-digit' 
+        });
+    }
+
     function renderAllCardsModal(viewType = 'current', filterType = 'active') {
         const lang = languageSelect.value;
-        const today = cardManager.getTodayDateString();
         const t = (key, fallback) => translations[lang][key] || fallback;
 
         let sourceCards;
@@ -504,7 +605,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         status = `<span class="status-suspended">${t('statusSuspended', 'Suspended')}</span>`;
                     } else if (card.repetitions === 0) {
                         status = `<span class="status-new">${t('statusNew', 'New')}</span>`;
-                    } else if (card.nextReviewDate <= today) {
+                    } else if (new Date(card.nextReviewDate) <= new Date()) {
                         status = `<span class="status-due">${t('statusDue', 'Due')}</span>`;
                     } else {
                         status = `<span class="status-review">${t('statusReview', 'Review')}</span>`;
@@ -514,12 +615,22 @@ document.addEventListener('DOMContentLoaded', () => {
                         ? `<button class="action-btn restore-btn" data-action="restore" data-card-id="${card.id}">${t('restore', 'Restore')}</button>`
                         : `<button class="action-btn suspend-btn" data-action="suspend" data-card-id="${card.id}">${t('suspend', 'Suspend')}</button>`;
 
+                    const intervalInMinutes = card.interval || 0;
+                    let intervalDisplay;
+                    if (intervalInMinutes < 60) {
+                        intervalDisplay = `${intervalInMinutes}m`;
+                    } else if (intervalInMinutes < 1440) {
+                        intervalDisplay = `${(intervalInMinutes / 60).toFixed(1)}h`;
+                    } else {
+                        intervalDisplay = `${(intervalInMinutes / 1440).toFixed(1)}d`;
+                    }
+
                     return `
                         <tr class="${card.isSuspended ? 'suspended-row' : ''}">
                             <td>${card.question || ''}</td>
                             <td>${(card.answers || []).slice(1).join(', ')}</td>
-                            <td>${card.nextReviewDate === today ? t('today', 'Today') : card.nextReviewDate}</td>
-                            <td>${card.interval || 0}</td>
+                            <td>${formatReviewDate(card.nextReviewDate, lang)}</td>
+                            <td>${intervalDisplay}</td>
                             <td>${(card.efactor || 2.5).toFixed(2)}</td>
                             <td>${status}</td>
                             <td>${actionButton}</td>
@@ -612,17 +723,40 @@ document.addEventListener('DOMContentLoaded', () => {
         cramButton.addEventListener('click', startCramSession);
     }
 
+    // --- Settings Functions ---
+    function loadSettings() {
+        const savedSettings = JSON.parse(localStorage.getItem(SETTINGS_STORAGE_KEY) || '{}');
+        // Deep merge to handle partial saved settings
+        srsSettings = {
+            initialInterval: { ...defaultSrsSettings.initialInterval, ...(savedSettings.initialInterval || {}) },
+            secondInterval: { ...defaultSrsSettings.secondInterval, ...(savedSettings.secondInterval || {}) },
+            lapseInterval: { ...defaultSrsSettings.lapseInterval, ...(savedSettings.lapseInterval || {}) },
+        };
+    }
+
+    function saveSettings() {
+        srsSettings.initialInterval.value = parseInt(initialIntervalValueInput.value, 10) || defaultSrsSettings.initialInterval.value;
+        srsSettings.initialInterval.unit = initialIntervalUnitInput.value;
+        srsSettings.secondInterval.value = parseInt(secondIntervalValueInput.value, 10) || defaultSrsSettings.secondInterval.value;
+        srsSettings.secondInterval.unit = secondIntervalUnitInput.value;
+        srsSettings.lapseInterval.value = parseInt(lapseIntervalValueInput.value, 10) || defaultSrsSettings.lapseInterval.value;
+        srsSettings.lapseInterval.unit = lapseIntervalUnitInput.value;
+        localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(srsSettings));
+    }
+
+    function populateSettingsModal() {
+        initialIntervalValueInput.value = srsSettings.initialInterval.value;
+        initialIntervalUnitInput.value = srsSettings.initialInterval.unit;
+        secondIntervalValueInput.value = srsSettings.secondInterval.value;
+        secondIntervalUnitInput.value = srsSettings.secondInterval.unit;
+        lapseIntervalValueInput.value = srsSettings.lapseInterval.value;
+        lapseIntervalUnitInput.value = srsSettings.lapseInterval.unit;
+    }
+
     // --- Event Listeners ---
     languageSelect.addEventListener('change', (event) => setLanguage(event.target.value));
     showErrorsButton.addEventListener('click', showAllCardsModal);
     
-    clearCacheButton.addEventListener('click', () => {
-        if (confirm(translations[languageSelect.value].confirmClearCache)) {
-            localStorage.clear();
-            alert(translations[languageSelect.value].cacheClearedAlert);
-            location.reload();
-        }
-    });
     continueButton.addEventListener('click', proceedToNextCard);
     answerInput.addEventListener('keydown', (event) => {
         if (event.key === 'Enter') {
@@ -635,6 +769,7 @@ document.addEventListener('DOMContentLoaded', () => {
     closeModalButton.addEventListener('click', () => errorModal.style.display = 'none');
     window.addEventListener('click', (event) => {
         if (event.target == errorModal) errorModal.style.display = 'none';
+        if (event.target == settingsModal) settingsModal.style.display = 'none';
     });
     wordListInput.addEventListener('input', () => {
         localStorage.setItem(WORD_LIST_STORAGE_KEY, wordListInput.value);
@@ -692,9 +827,33 @@ document.addEventListener('DOMContentLoaded', () => {
         if (event.target.files.length > 0) handleFile(event.target.files[0]);
     });
 
+    // Settings Modal Listeners
+    settingsButton.addEventListener('click', () => {
+        populateSettingsModal();
+        settingsModal.style.display = 'flex';
+    });
+    settingsModalCloseButton.addEventListener('click', () => settingsModal.style.display = 'none');
+    saveSettingsButton.addEventListener('click', () => {
+        saveSettings();
+        settingsModal.style.display = 'none';
+    });
+    resetSettingsButton.addEventListener('click', () => {
+        srsSettings = { ...defaultSrsSettings };
+        populateSettingsModal();
+        saveSettings(); // Also save after resetting
+    });
+    clearCacheButton.addEventListener('click', () => {
+        if (confirm(translations[languageSelect.value].confirmClearCache)) {
+            localStorage.clear();
+            alert(translations[languageSelect.value].cacheClearedAlert);
+            location.reload();
+        }
+    });
+
+
     // --- Global Keydown Listener ---
     document.addEventListener('keydown', (event) => {
-        if (errorModal.style.display === 'block') return;
+        if (errorModal.style.display === 'block' || settingsModal.style.display === 'flex') return;
 
         if (event.key === 'Enter' && continueButton.style.display !== 'none') {
             event.preventDefault();
@@ -707,6 +866,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Initialization ---
     function init() {
         errorModal.style.display = 'none';
+        settingsModal.style.display = 'none';
+        loadSettings();
         setupButtons();
         const savedWordList = localStorage.getItem(WORD_LIST_STORAGE_KEY);
         if (savedWordList) wordListInput.value = savedWordList;

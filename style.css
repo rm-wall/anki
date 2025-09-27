@@ -224,6 +224,11 @@ button:disabled {
     flex-direction: column;
 }
 
+#settings-modal .modal-content {
+    height: auto;
+    max-width: 500px;
+}
+
 .close-button {
     color: #aaa;
     float: right;
@@ -246,6 +251,70 @@ button:disabled {
     overflow-y: auto;
     flex-grow: 1; /* Allow this element to grow */
 }
+
+/* --- Settings Modal Styles --- */
+.settings-form {
+    margin-top: 20px;
+}
+
+.settings-form-group {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.settings-form-group label {
+    margin-right: 10px;
+    white-space: nowrap;
+}
+
+.input-group {
+    display: flex;
+    gap: 5px;
+}
+
+.settings-form-group input[type="number"] {
+    width: 80px;
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 1rem;
+}
+
+.settings-form-group select {
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 1rem;
+}
+
+.modal-button-group {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid #eee;
+}
+
+.settings-danger-zone {
+    margin-top: 30px;
+    padding-top: 15px;
+    border-top: 1px solid #ffbaba;
+}
+.settings-danger-zone h3 {
+    margin-top: 0;
+    color: #ff3b30;
+}
+#clear-cache-button {
+    background-color: #ff3b30;
+    width: 100%;
+}
+#clear-cache-button:hover {
+    background-color: #c7001e;
+}
+
 
 /* --- Card Status Table Styles --- */
 .cards-table {
