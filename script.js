@@ -214,42 +214,39 @@ document.addEventListener('DOMContentLoaded', () => {
 
         syncFromTextarea: () => {
             const text = wordListInput.value.trim();
-            if (!text) {
-                allCards.clear();
-                cardManager.save();
-                cardManager.updateDueCount();
-                return;
-            }
-            
             const lines = text.split('\n');
             const seenIds = new Set();
 
-            lines.forEach(line => {
-                const parts = line.split(',').map(part => part.trim()).filter(part => part);
-                if (parts.length < 2) return;
+            if (text) {
+                lines.forEach(line => {
+                    const parts = line.split(',').map(part => part.trim()).filter(part => part);
+                    if (parts.length < 2) return;
 
-                const id = parts.join(',');
-                seenIds.add(id);
+                    const id = parts.join(',');
+                    seenIds.add(id);
 
-                if (!allCards.has(id)) {
-                    allCards.set(id, {
-                        id: id,
-                        question: parts[0],
-                        answers: parts,
-                        repetitions: 0,
-                        efactor: 2.5,
-                        interval: 0,
-                        nextReviewDate: cardManager.getTodayDateString(),
-                        isSuspended: false,
-                    });
-                }
-            });
-            
+                    if (!allCards.has(id)) {
+                        allCards.set(id, {
+                            id: id,
+                            question: parts[0],
+                            answers: parts,
+                            repetitions: 0,
+                            efactor: 2.5,
+                            interval: 0,
+                            nextReviewDate: cardManager.getTodayDateString(),
+                            isSuspended: false,
+                        });
+                    }
+                });
+            }
+
+            const idsToDelete = [];
             allCards.forEach((card, id) => {
-                if (!seenIds.has(id)) {
-                    allCards.delete(id);
+                if (!seenIds.has(id) && card.repetitions === 0) {
+                    idsToDelete.push(id);
                 }
             });
+            idsToDelete.forEach(id => allCards.delete(id));
 
             cardManager.save();
             cardManager.updateDueCount();
