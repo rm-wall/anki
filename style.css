@@ -315,7 +315,26 @@ button:disabled {
     border-bottom: 1px solid #ccc;
     margin-bottom: 10px;
     display: flex;
-    gap: 10px;
+    gap: 20px; /* Increased gap between the two groups */
+    align-items: center;
+}
+
+.view-tabs, .filter-tabs {
+    display: flex;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    overflow: hidden; /* Ensures the inner button corners don't stick out */
+}
+
+.view-tabs .tab-btn, .filter-tabs .tab-btn {
+    border: none; /* Remove individual borders */
+    border-radius: 0; /* Remove individual border-radius */
+    border-right: 1px solid #ccc; /* Add a separator */
+    margin: 0;
+}
+
+.view-tabs .tab-btn:last-child, .filter-tabs .tab-btn:last-child {
+    border-right: none; /* No separator for the last button */
 }
 
 .action-btn {
@@ -347,13 +366,15 @@ button:disabled {
     border-radius: 5px;
     font-size: 0.9rem;
     color: #333;
+    min-width: 100px; /* Add min-width */
+    text-align: center; /* Center the text */
+    font-weight: bold; /* Make all tabs bold */
 }
 
 .tab-btn.active {
     background-color: #007aff;
     color: white;
     border-color: #007aff;
-    font-weight: bold;
 }
 
 .tab-btn:not(.active):hover {

@@ -49,6 +49,8 @@ document.addEventListener('DOMContentLoaded', () => {
             restore: '恢复',
             activeCards: '活动卡片',
             suspendedCards: '已暂停',
+            currentListCards: '当前列表',
+            allTimeCards: '所有卡片',
             lastUpdatedLabel: '最后更新于：'
         },
         'en': {
@@ -99,6 +101,8 @@ document.addEventListener('DOMContentLoaded', () => {
             restore: 'Restore',
             activeCards: 'Active Cards',
             suspendedCards: 'Suspended',
+            currentListCards: 'Current List',
+            allTimeCards: 'All Cards',
             lastUpdatedLabel: 'Last updated:'
         },
         'ja': {
@@ -149,6 +153,8 @@ document.addEventListener('DOMContentLoaded', () => {
             restore: '再開',
             activeCards: 'アクティブなカード',
             suspendedCards: '一時停止中',
+            currentListCards: '現在のリスト',
+            allTimeCards: '全カード',
             lastUpdatedLabel: '最終更新日：'
         }
     };
@@ -455,15 +461,23 @@ document.addEventListener('DOMContentLoaded', () => {
         cardManager.updateDueCount();
     }
 
-    function renderAllCardsModal(filterType = 'active') {
+    function renderAllCardsModal(viewType = 'current', filterType = 'active') {
         const lang = languageSelect.value;
         const today = cardManager.getTodayDateString();
+        const t = (key, fallback) => translations[lang][key] || fallback;
+
+        let sourceCards;
+        if (viewType === 'current') {
+            const text = wordListInput.value.trim();
+            const currentIds = new Set(text.split('\n').map(line => line.split(',').map(part => part.trim()).filter(part => part).join(',')));
+            sourceCards = Array.from(allCards.values()).filter(card => currentIds.has(card.id));
+        } else { // 'all'
+            sourceCards = Array.from(allCards.values());
+        }
         
-        const filteredCards = Array.from(allCards.values()).filter(card => {
+        const filteredCards = sourceCards.filter(card => {
             return filterType === 'suspended' ? card.isSuspended : !card.isSuspended;
         });
-
-        const t = (key, fallback) => translations[lang][key] || fallback;
 
         const tableHeader = `
             <thead>
@@ -515,15 +529,21 @@ document.addEventListener('DOMContentLoaded', () => {
         
         const tabs = `
             <div class="modal-toolbar">
-                <button class="tab-btn ${filterType === 'active' ? 'active' : ''}" data-filter="active">${t('activeCards', 'Active Cards')}</button>
-                <button class="tab-btn ${filterType === 'suspended' ? 'active' : ''}" data-filter="suspended">${t('suspendedCards', 'Suspended')}</button>
+                <div class="view-tabs">
+                    <button class="tab-btn ${viewType === 'current' ? 'active' : ''}" data-view="current">${t('currentListCards', 'Current List')}</button>
+                    <button class="tab-btn ${viewType === 'all' ? 'active' : ''}" data-view="all">${t('allTimeCards', 'All Cards')}</button>
+                </div>
+                <div class="filter-tabs">
+                    <button class="tab-btn ${filterType === 'active' ? 'active' : ''}" data-filter="active">${t('activeCards', 'Active Cards')}</button>
+                    <button class="tab-btn ${filterType === 'suspended' ? 'active' : ''}" data-filter="suspended">${t('suspendedCards', 'Suspended')}</button>
+                </div>
             </div>`;
 
         modalIncorrectListEl.innerHTML = `${tabs}<table class="cards-table">${tableHeader}${tableBody}</table>`;
     }
 
     function showAllCardsModal() {
-        renderAllCardsModal('active');
+        renderAllCardsModal('current', 'active');
         errorModal.style.display = 'flex';
     }
 
@@ -624,15 +644,33 @@ document.addEventListener('DOMContentLoaded', () => {
     modalIncorrectListEl.addEventListener('click', (event) => {
         const target = event.target;
         if (target.matches('.tab-btn')) {
-            renderAllCardsModal(target.dataset.filter);
+            const activeViewBtn = modalIncorrectListEl.querySelector('.tab-btn[data-view].active');
+            const activeFilterBtn = modalIncorrectListEl.querySelector('.tab-btn[data-filter].active');
+            
+            let viewType = activeViewBtn ? activeViewBtn.dataset.view : 'current';
+            let filterType = activeFilterBtn ? activeFilterBtn.dataset.filter : 'active';
+
+            if (target.dataset.view) {
+                viewType = target.dataset.view;
+            }
+            if (target.dataset.filter) {
+                filterType = target.dataset.filter;
+            }
+            
+            renderAllCardsModal(viewType, filterType);
+
         } else if (target.matches('.action-btn')) {
             const action = target.dataset.action;
             const cardId = target.dataset.cardId;
             if (action === 'suspend') cardManager.suspend(cardId);
             else if (action === 'restore') cardManager.restore(cardId);
             
-            const activeTab = modalIncorrectListEl.querySelector('.tab-btn.active');
-            renderAllCardsModal(activeTab ? activeTab.dataset.filter : 'active');
+            const activeViewBtn = modalIncorrectListEl.querySelector('.tab-btn[data-view].active');
+            const activeFilterBtn = modalIncorrectListEl.querySelector('.tab-btn[data-filter].active');
+            renderAllCardsModal(
+                activeViewBtn ? activeViewBtn.dataset.view : 'current',
+                activeFilterBtn ? activeFilterBtn.dataset.filter : 'active'
+            );
         }
     });
 
