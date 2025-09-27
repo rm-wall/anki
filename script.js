@@ -800,8 +800,14 @@ document.addEventListener('DOMContentLoaded', () => {
                     localStorage.setItem(WORD_LIST_STORAGE_KEY, content);
                     cardManager.syncFromTextarea();
                     alert(translations[languageSelect.value].importSuccess);
-                    errorModal.style.display = 'none';
-                    location.reload();
+
+                    // Re-render the modal to show the updated list
+                    const activeViewBtn = modalIncorrectListEl.querySelector('.tab-btn[data-view].active');
+                    const activeFilterBtn = modalIncorrectListEl.querySelector('.tab-btn[data-filter].active');
+                    const viewType = activeViewBtn ? activeViewBtn.dataset.view : 'current';
+                    const filterType = activeFilterBtn ? activeFilterBtn.dataset.filter : 'active';
+                    renderAllCardsModal(viewType, filterType);
+
                 } catch (error) {
                     alert(translations[languageSelect.value].importFailed);
                 }
