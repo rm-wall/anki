@@ -67,11 +67,11 @@ document.addEventListener('DOMContentLoaded', () => {
             hours: '小时',
             days: '天',
             dangerZoneHeading: '危险区域',
-            exportButton: '导出',
-            importButton: '导入',
-            confirmImport: '确定要导入卡片数据吗？这将覆盖所有现有的卡片数据，此操作不可撤销。',
-            importSuccess: '导入成功！页面将重新加载。',
-            importFailed: '导入失败。请检查文件格式是否正确。'
+            exportButton: '导出词表',
+            importButton: '导入词表',
+            confirmImport: '确定要导入新的单词列表吗？这将覆盖文本框中的现有列表，但会保留已存在的卡片进度。',
+            importSuccess: '词表导入成功！页面将刷新以应用更改。',
+            importFailed: '导入失败。请检查文件是否为纯文本格式。'
         },
         'en': {
             title: 'Anki Program',
@@ -139,11 +139,11 @@ document.addEventListener('DOMContentLoaded', () => {
             hours: 'Hours',
             days: 'Days',
             dangerZoneHeading: 'Danger Zone',
-            exportButton: 'Export',
-            importButton: 'Import',
-            confirmImport: 'Are you sure you want to import card data? This will overwrite all existing card data and cannot be undone.',
-            importSuccess: 'Import successful! The page will now reload.',
-            importFailed: 'Import failed. Please check the file format.'
+            exportButton: 'Export List',
+            importButton: 'Import List',
+            confirmImport: 'Are you sure you want to import a new word list? This will overwrite the current list in the textarea but will preserve existing card progress.',
+            importSuccess: 'Word list imported successfully! The page will reload to apply changes.',
+            importFailed: 'Import failed. Please ensure the file is a plain text file.'
         },
         'ja': {
             title: '暗記プログラム',
@@ -211,11 +211,11 @@ document.addEventListener('DOMContentLoaded', () => {
             hours: '時間',
             days: '日',
             dangerZoneHeading: '危険区域',
-            exportButton: 'エクスポート',
-            importButton: 'インポート',
-            confirmImport: 'カードデータをインポートしてもよろしいですか？これにより、既存のすべてのカードデータが上書きされ、元に戻すことはできません。',
-            importSuccess: 'インポートに成功しました！ページがリロードされます。',
-            importFailed: 'インポートに失敗しました。ファイル形式を確認してください。'
+            exportButton: 'リストをエクスポート',
+            importButton: 'リストをインポート',
+            confirmImport: '新しい単語リストをインポートしてもよろしいですか？これにより、テキストエリア内の現在のリストが上書きされますが、既存のカードの進捗は保持されます。',
+            importSuccess: '単語リストが正常にインポートされました！ページがリロードされ、変更が適用されます。',
+            importFailed: 'インポートに失敗しました。ファイルがプレーンテキスト形式であることを確認してください。'
         }
     };
 
@@ -724,7 +724,7 @@ document.addEventListener('DOMContentLoaded', () => {
             <div class="modal-io-buttons">
                 <button id="export-cards-button" data-i18n="exportButton">${t('exportButton', 'Export')}</button>
                 <button id="import-cards-button" data-i18n="importButton">${t('importButton', 'Import')}</button>
-                <input type="file" id="import-cards-input" accept=".txt,.json" style="display: none;">
+                <input type="file" id="import-cards-input" accept=".txt" style="display: none;">
             </div>`
             : '';
 
@@ -770,16 +770,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- I/O Functions ---
     function exportCards() {
-        const data = localStorage.getItem(CARDS_STORAGE_KEY);
-        if (!data || data === '[]') {
-            alert('No card data to export.');
+        const cardIds = Array.from(allCards.keys());
+        if (cardIds.length === 0) {
+            alert('No cards to export.');
             return;
         }
-        const blob = new Blob([data], { type: 'application/json' });
+        const data = cardIds.join('\n');
+        const blob = new Blob([data], { type: 'text/plain' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `anki_backup_${new Date().toISOString().slice(0, 10)}.txt`;
+        a.download = `anki_word_list_${new Date().toISOString().slice(0, 10)}.txt`;
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
@@ -795,13 +796,11 @@ document.addEventListener('DOMContentLoaded', () => {
             const content = e.target.result;
             if (confirm(translations[languageSelect.value].confirmImport)) {
                 try {
-                    // Basic validation to see if it's a JSON array
-                    const parsed = JSON.parse(content);
-                    if (!Array.isArray(parsed)) {
-                        throw new Error('Not an array');
-                    }
-                    localStorage.setItem(CARDS_STORAGE_KEY, content);
+                    wordListInput.value = content;
+                    localStorage.setItem(WORD_LIST_STORAGE_KEY, content);
+                    cardManager.syncFromTextarea();
                     alert(translations[languageSelect.value].importSuccess);
+                    errorModal.style.display = 'none';
                     location.reload();
                 } catch (error) {
                     alert(translations[languageSelect.value].importFailed);
