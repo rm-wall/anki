@@ -801,12 +801,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     cardManager.syncFromTextarea();
                     alert(translations[languageSelect.value].importSuccess);
 
-                    // Re-render the modal to show the updated list
-                    const activeViewBtn = modalIncorrectListEl.querySelector('.tab-btn[data-view].active');
+                    // Re-render the modal, forcing it to show the 'all' view to reflect the import.
                     const activeFilterBtn = modalIncorrectListEl.querySelector('.tab-btn[data-filter].active');
-                    const viewType = activeViewBtn ? activeViewBtn.dataset.view : 'current';
                     const filterType = activeFilterBtn ? activeFilterBtn.dataset.filter : 'active';
-                    renderAllCardsModal(viewType, filterType);
+                    renderAllCardsModal('all', filterType);
 
                 } catch (error) {
                     alert(translations[languageSelect.value].importFailed);
