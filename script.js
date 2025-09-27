@@ -66,7 +66,12 @@ document.addEventListener('DOMContentLoaded', () => {
             minutes: '分钟',
             hours: '小时',
             days: '天',
-            dangerZoneHeading: '危险区域'
+            dangerZoneHeading: '危险区域',
+            exportButton: '导出',
+            importButton: '导入',
+            confirmImport: '确定要导入卡片数据吗？这将覆盖所有现有的卡片数据，此操作不可撤销。',
+            importSuccess: '导入成功！页面将重新加载。',
+            importFailed: '导入失败。请检查文件格式是否正确。'
         },
         'en': {
             title: 'Anki Program',
@@ -78,7 +83,7 @@ document.addEventListener('DOMContentLoaded', () => {
             randomOrderLabel: 'Random Order',
             smartReviewButton: 'Smart Review ({dueCount})',
             cramButton: 'Cram Session',
-            reviewing: 'Reviewing...', 
+            reviewing: 'Reviewing...',
             showAllCardsButton: 'View All Cards',
             reviewOptionsLegend: 'Review Options',
             reviewScopeLegend: 'Review Scope',
@@ -133,7 +138,12 @@ document.addEventListener('DOMContentLoaded', () => {
             minutes: 'Minutes',
             hours: 'Hours',
             days: 'Days',
-            dangerZoneHeading: 'Danger Zone'
+            dangerZoneHeading: 'Danger Zone',
+            exportButton: 'Export',
+            importButton: 'Import',
+            confirmImport: 'Are you sure you want to import card data? This will overwrite all existing card data and cannot be undone.',
+            importSuccess: 'Import successful! The page will now reload.',
+            importFailed: 'Import failed. Please check the file format.'
         },
         'ja': {
             title: '暗記プログラム',
@@ -145,7 +155,7 @@ document.addEventListener('DOMContentLoaded', () => {
             randomOrderLabel: 'ランダムな順序',
             smartReviewButton: 'スマートレビュー ({dueCount})',
             cramButton: '集中学習',
-            reviewing: '復習中...', 
+            reviewing: '復習中...',
             showAllCardsButton: '全カード表示',
             reviewOptionsLegend: 'レビュー選択',
             reviewScopeLegend: 'レビュー範囲',
@@ -200,7 +210,12 @@ document.addEventListener('DOMContentLoaded', () => {
             minutes: '分',
             hours: '時間',
             days: '日',
-            dangerZoneHeading: '危険区域'
+            dangerZoneHeading: '危険区域',
+            exportButton: 'エクスポート',
+            importButton: 'インポート',
+            confirmImport: 'カードデータをインポートしてもよろしいですか？これにより、既存のすべてのカードデータが上書きされ、元に戻すことはできません。',
+            importSuccess: 'インポートに成功しました！ページがリロードされます。',
+            importFailed: 'インポートに失敗しました。ファイル形式を確認してください。'
         }
     };
 
@@ -241,9 +256,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const lapseIntervalValueInput = document.getElementById('setting-lapse-interval-value');
     const lapseIntervalUnitInput = document.getElementById('setting-lapse-interval-unit');
     const settingsModalCloseButton = settingsModal.querySelector('.close-button');
+    const exportCardsButton = document.getElementById('export-cards-button');
+    const importCardsButton = document.getElementById('import-cards-button');
+    const importCardsInput = document.getElementById('import-cards-input');
 
     // New button will be created dynamically, but we need a placeholder in the HTML
-    let cramButton; 
+    let cramButton;
 
     // --- App State ---
     let sessionCards = [];
@@ -286,7 +304,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     card.nextReviewDate = cardManager.getNowISO();
                     // Also reset interval to be in minutes, assuming old intervals were in days.
                     // This makes it compatible with the new system. A value of 0 is safe.
-                    card.interval = 0; 
+                    card.interval = 0;
                     needsSave = true;
                 }
             });
@@ -345,11 +363,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
         getDueCards: () => {
             const now = new Date();
-            return Array.from(allCards.values()).filter(card => 
+            return Array.from(allCards.values()).filter(card =>
                 !card.isSuspended && new Date(card.nextReviewDate) <= now
             );
         },
-        
+
         getAllActiveCards: () => {
             return Array.from(allCards.values()).filter(card => !card.isSuspended);
         },
@@ -378,7 +396,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 card.repetitions = 0;
                 card.interval = getNextIntervalInMinutes(srsSettings.lapseInterval);
             }
-            
+
             const quality = isCorrect ? 5 : 1;
             card.efactor += (0.1 - (5 - quality) * (0.08 + (5 - quality) * 0.02));
             if (card.efactor < 1.3) card.efactor = 1.3;
@@ -386,7 +404,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const nextReview = new Date();
             nextReview.setMinutes(nextReview.getMinutes() + card.interval);
             card.nextReviewDate = nextReview.toISOString();
-            
+
             cardManager.save();
         },
 
@@ -411,7 +429,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         updateDueCount: () => {
             const scopeIsTextarea = document.getElementById('scope-textarea').checked;
-            
+
             let dueCards;
             let activeCards;
 
@@ -430,7 +448,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const template = translations[lang].smartReviewButton || 'Smart Review ({dueCount})';
             startButton.textContent = template.replace('{dueCount}', dueCount);
             startButton.disabled = dueCount === 0;
-            
+
             if (cramButton) {
                 cramButton.disabled = activeCards.length === 0;
             }
@@ -445,8 +463,8 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        if (randomOrderCheckbox.checked) shuffle(cards); 
-        
+        if (randomOrderCheckbox.checked) shuffle(cards);
+
         sessionCards = cards;
         currentCardIndex = 0;
         sessionCorrectCount = 0;
@@ -461,7 +479,7 @@ document.addEventListener('DOMContentLoaded', () => {
         feedbackEl.innerHTML = '&nbsp;';
         feedbackEl.className = '';
         continueButton.style.display = 'none';
-        
+
         displayNextCard();
     }
 
@@ -477,7 +495,7 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
             dueCards = cardManager.getDueCards();
         }
-        
+
         startSession(dueCards);
     }
 
@@ -542,7 +560,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const processedUserAnswer = userAnswer.replace(/\s/g, '').toLowerCase();
         const currentCard = sessionCards[currentCardIndex];
         const processedAnswers = currentCard.answers.map(a => a.replace(/\s/g, '').toLowerCase());
-        
+
         answerInput.disabled = true;
 
         if (processedAnswers.includes(processedUserAnswer)) {
@@ -622,10 +640,10 @@ document.addEventListener('DOMContentLoaded', () => {
         if (isToday) {
             return t('today', 'Today') + ' ' + date.toLocaleTimeString(lang, { hour: '2-digit', minute: '2-digit' });
         }
-        
-        return date.toLocaleString(lang, { 
-            year: 'numeric', month: 'short', day: 'numeric', 
-            hour: '2-digit', minute: '2-digit' 
+
+        return date.toLocaleString(lang, {
+            year: 'numeric', month: 'short', day: 'numeric',
+            hour: '2-digit', minute: '2-digit'
         });
     }
 
@@ -641,7 +659,7 @@ document.addEventListener('DOMContentLoaded', () => {
         } else { // 'all'
             sourceCards = Array.from(allCards.values());
         }
-        
+
         const filteredCards = sourceCards.filter(card => {
             return filterType === 'suspended' ? card.isSuspended : !card.isSuspended;
         });
@@ -703,7 +721,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         </tr>`;
                 }).join('') + `</tbody>`;
         }
-        
+
         const tabs = `
             <div class="modal-toolbar">
                 <div class="view-tabs">
@@ -741,6 +759,52 @@ document.addEventListener('DOMContentLoaded', () => {
         reader.readAsText(file);
     }
 
+    // --- I/O Functions ---
+    function exportCards() {
+        const data = localStorage.getItem(CARDS_STORAGE_KEY);
+        if (!data) {
+            alert('No card data to export.');
+            return;
+        }
+        const blob = new Blob([data], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `anki_backup_${new Date().toISOString().slice(0, 10)}.txt`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    }
+
+    function importCards(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const content = e.target.result;
+            if (confirm(translations[languageSelect.value].confirmImport)) {
+                try {
+                    // Basic validation to see if it's a JSON array
+                    const parsed = JSON.parse(content);
+                    if (!Array.isArray(parsed)) {
+                        throw new Error('Not an array');
+                    }
+                    localStorage.setItem(CARDS_STORAGE_KEY, content);
+                    alert(translations[languageSelect.value].importSuccess);
+                    location.reload();
+                } catch (error) {
+                    alert(translations[languageSelect.value].importFailed);
+                }
+            }
+        };
+        reader.readAsText(file);
+        // Reset input value to allow importing the same file again
+        event.target.value = '';
+    }
+
+
     // --- Language Functions ---
     function setLanguage(lang) {
         const translation = translations[lang];
@@ -775,11 +839,11 @@ document.addEventListener('DOMContentLoaded', () => {
             lastUpdatedElement.textContent = `${label} ${dateString}`;
         }
     }
-    
+
     // --- Create and inject Cram Button ---
     function setupButtons() {
         startButton.setAttribute('data-i18n', 'smartReviewButton');
-        
+
         cramButton = document.createElement('button');
         cramButton.id = 'cram-button';
         cramButton.setAttribute('data-i18n', 'cramButton');
@@ -822,7 +886,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Event Listeners ---
     languageSelect.addEventListener('change', (event) => setLanguage(event.target.value));
     showErrorsButton.addEventListener('click', showAllCardsModal);
-    
+
     continueButton.addEventListener('click', proceedToNextCard);
     answerInput.addEventListener('keydown', (event) => {
         if (event.key === 'Enter') {
@@ -847,7 +911,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (target.matches('.tab-btn')) {
             const activeViewBtn = modalIncorrectListEl.querySelector('.tab-btn[data-view].active');
             const activeFilterBtn = modalIncorrectListEl.querySelector('.tab-btn[data-filter].active');
-            
+
             let viewType = activeViewBtn ? activeViewBtn.dataset.view : 'current';
             let filterType = activeFilterBtn ? activeFilterBtn.dataset.filter : 'active';
 
@@ -857,7 +921,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (target.dataset.filter) {
                 filterType = target.dataset.filter;
             }
-            
+
             renderAllCardsModal(viewType, filterType);
 
         } else if (target.matches('.action-btn')) {
@@ -865,7 +929,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const cardId = target.dataset.cardId;
             if (action === 'suspend') cardManager.suspend(cardId);
             else if (action === 'restore') cardManager.restore(cardId);
-            
+
             const activeViewBtn = modalIncorrectListEl.querySelector('.tab-btn[data-view].active');
             const activeFilterBtn = modalIncorrectListEl.querySelector('.tab-btn[data-filter].active');
             renderAllCardsModal(
@@ -892,6 +956,12 @@ document.addEventListener('DOMContentLoaded', () => {
     fileInput.addEventListener('change', (event) => {
         if (event.target.files.length > 0) handleFile(event.target.files[0]);
     });
+
+    // I/O Button Listeners
+    exportCardsButton.addEventListener('click', exportCards);
+    importCardsButton.addEventListener('click', () => importCardsInput.click());
+    importCardsInput.addEventListener('change', importCards);
+
 
     // Settings Modal Listeners
     settingsButton.addEventListener('click', () => {
@@ -945,7 +1015,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (savedLang && translations[savedLang]) initialLang = savedLang;
         else if (translations[navigator.language]) initialLang = navigator.language;
         else if (translations[browserLang]) initialLang = browserLang;
-        
+
         setLanguage(initialLang);
         cardManager.load();
         cardManager.syncFromTextarea();

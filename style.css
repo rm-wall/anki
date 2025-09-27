@@ -277,6 +277,33 @@ button:disabled {
     cursor: pointer;
 }
 
+.modal-io-buttons {
+    display: flex;
+    gap: 10px;
+    margin-top: 10px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #eee;
+}
+
+#export-cards-button, #import-cards-button {
+    padding: 8px 15px;
+    font-size: 0.9rem;
+}
+
+#export-cards-button {
+    background-color: #34c759; /* Green */
+}
+#export-cards-button:hover {
+    background-color: #2ca349;
+}
+
+#import-cards-button {
+    background-color: #ff9500; /* Orange */
+}
+#import-cards-button:hover {
+    background-color: #e08500;
+}
+
 #modal-incorrect-list {
     background-color: #f0f2f5;
     border-radius: 5px;
