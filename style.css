@@ -164,11 +164,45 @@ button:disabled {
 
 
 .button-group {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr); /* Two equal columns */
-    gap: 12px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: center;
+    justify-content: center;
     margin-top: 20px;
 }
+
+.review-options-fieldset {
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    padding: 10px 15px;
+    margin: 15px 0 0; /* No longer centered */
+    display: inline-flex; /* Use inline-flex to shrink-wrap content */
+    flex-wrap: wrap;
+    gap: 15px;
+    align-items: baseline;
+    /* justify-content: center; is removed */
+}
+
+.option-separator {
+    border-left: 1px solid #ddd;
+    height: 20px;
+}
+
+
+.review-options-fieldset legend {
+    padding: 0 5px;
+    font-size: 0.9em;
+    color: #555;
+}
+
+.order-option, .review-scope-option {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+
 
 .button-group button {
     margin-top: 0; /* Remove margin as gap is used now */

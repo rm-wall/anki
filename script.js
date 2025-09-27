@@ -13,6 +13,10 @@ document.addEventListener('DOMContentLoaded', () => {
             cramButton: '自由复习',
             reviewing: '学习中...', 
             showAllCardsButton: '查看所有卡片',
+            reviewOptionsLegend: '复习选项',
+            reviewScopeLegend: '复习范围',
+            scopeAllLabel: '所有单词',
+            scopeTextareaLabel: '文本框内单词',
             clearCacheButton: '清空缓存',
             cacheClearedAlert: '缓存已清空！',
             confirmClearCache: '确定要清空所有本地数据吗？这将删除所有卡片记录和语言设置。此操作不可撤销。',
@@ -76,6 +80,10 @@ document.addEventListener('DOMContentLoaded', () => {
             cramButton: 'Cram Session',
             reviewing: 'Reviewing...', 
             showAllCardsButton: 'View All Cards',
+            reviewOptionsLegend: 'Review Options',
+            reviewScopeLegend: 'Review Scope',
+            scopeAllLabel: 'All words',
+            scopeTextareaLabel: 'Words in textarea',
             clearCacheButton: 'Clear Cache',
             cacheClearedAlert: 'Cache cleared!',
             confirmClearCache: 'Are you sure you want to clear all local data? This will delete all card history and language settings. This action cannot be undone.',
@@ -139,6 +147,10 @@ document.addEventListener('DOMContentLoaded', () => {
             cramButton: '集中学習',
             reviewing: '復習中...', 
             showAllCardsButton: '全カード表示',
+            reviewOptionsLegend: 'レビュー選択',
+            reviewScopeLegend: 'レビュー範囲',
+            scopeAllLabel: 'すべての単語',
+            scopeTextareaLabel: 'テキストエリアの単語',
             clearCacheButton: 'キャッシュをクリア',
             cacheClearedAlert: 'キャッシュがクリアされました！',
             confirmClearCache: '本当にすべてのローカルデータをクリアしますか？これには、すべてのカード記録と言語設定が含まれます。この操作は元に戻せません。',
@@ -398,14 +410,29 @@ document.addEventListener('DOMContentLoaded', () => {
         },
 
         updateDueCount: () => {
-            const dueCount = cardManager.getDueCards().length;
+            const scopeIsTextarea = document.getElementById('scope-textarea').checked;
+            
+            let dueCards;
+            let activeCards;
+
+            if (scopeIsTextarea) {
+                const text = wordListInput.value.trim();
+                const currentIds = new Set(text.split('\n').map(line => line.split(',').map(part => part.trim()).filter(part => part).join(',')));
+                dueCards = cardManager.getDueCards().filter(card => currentIds.has(card.id));
+                activeCards = cardManager.getAllActiveCards().filter(card => currentIds.has(card.id));
+            } else {
+                dueCards = cardManager.getDueCards();
+                activeCards = cardManager.getAllActiveCards();
+            }
+
+            const dueCount = dueCards.length;
             const lang = languageSelect.value;
             const template = translations[lang].smartReviewButton || 'Smart Review ({dueCount})';
             startButton.textContent = template.replace('{dueCount}', dueCount);
             startButton.disabled = dueCount === 0;
             
             if (cramButton) {
-                cramButton.disabled = cardManager.getAllActiveCards().length === 0;
+                cramButton.disabled = activeCards.length === 0;
             }
         }
     };
@@ -441,13 +468,33 @@ document.addEventListener('DOMContentLoaded', () => {
     function startSmartReview() {
         isCramming = false;
         cardManager.syncFromTextarea();
-        startSession(cardManager.getDueCards());
+
+        let dueCards;
+        if (document.getElementById('scope-textarea').checked) {
+            const text = wordListInput.value.trim();
+            const currentIds = new Set(text.split('\n').map(line => line.split(',').map(part => part.trim()).filter(part => part).join(',')));
+            dueCards = cardManager.getDueCards().filter(card => currentIds.has(card.id));
+        } else {
+            dueCards = cardManager.getDueCards();
+        }
+        
+        startSession(dueCards);
     }
 
     function startCramSession() {
         isCramming = true;
         cardManager.syncFromTextarea();
-        startSession(cardManager.getAllActiveCards());
+
+        let activeCards;
+        if (document.getElementById('scope-textarea').checked) {
+            const text = wordListInput.value.trim();
+            const currentIds = new Set(text.split('\n').map(line => line.split(',').map(part => part.trim()).filter(part => part).join(',')));
+            activeCards = Array.from(allCards.values()).filter(card => !card.isSuspended && currentIds.has(card.id));
+        } else {
+            activeCards = cardManager.getAllActiveCards();
+        }
+
+        startSession(activeCards);
     }
 
     function displayNextCard() {
@@ -903,6 +950,10 @@ document.addEventListener('DOMContentLoaded', () => {
         cardManager.load();
         cardManager.syncFromTextarea();
         showSetup();
+
+        // Add event listeners for scope change
+        document.getElementById('scope-all').addEventListener('change', cardManager.updateDueCount);
+        document.getElementById('scope-textarea').addEventListener('change', cardManager.updateDueCount);
     }
 
     init();
