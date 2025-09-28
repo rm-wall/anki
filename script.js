@@ -71,9 +71,10 @@ const translations = {
         confirmImport: '确定要导入新的单词列表吗？这只会添加文件中不存在的新卡片，不会影响文本框中的列表。',
         importSuccess: '词表导入成功！{count}张新卡片已添加。',
         importFailed: '导入失败。请检查文件是否为纯文本格式。',
-        dbInitializing: '正在初始化数据库...', 
+        dbInitializing: '正在初始化数据库...',
         totalWordsLabel: '总共: {count}',
         newWordsLabel: '新: {count}',
+        learnedWordsLabel: '已学: {count}',
         suspendedWordsLabel: '暂停: {count}',
         exportPrompt: '要导出哪种类型的卡片？',
         exportActive: '活动卡片',
@@ -153,6 +154,7 @@ const translations = {
         dbInitializing: 'Initializing Database...',
         totalWordsLabel: 'Total: {count}',
         newWordsLabel: 'New: {count}',
+        learnedWordsLabel: 'Learned: {count}',
         suspendedWordsLabel: 'Suspended: {count}',
         exportPrompt: 'Which type of cards do you want to export?',
         exportActive: 'Active Cards',
@@ -232,6 +234,7 @@ const translations = {
         dbInitializing: 'データベースを初期化しています...',
         totalWordsLabel: '合計: {count}',
         newWordsLabel: '新規: {count}',
+        learnedWordsLabel: '学習済み: {count}',
         suspendedWordsLabel: '一時停止: {count}',
         exportPrompt: 'どのタイプのカードをエクスポートしますか？',
         exportActive: 'アクティブなカード',
@@ -279,6 +282,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const textareaStatsEl = document.getElementById('textarea-stats');
     const totalWordsStatEl = document.getElementById('total-words-stat');
     const newWordsStatEl = document.getElementById('new-words-stat');
+    const learnedWordsStatEl = document.getElementById('learned-words-stat');
     const suspendedWordsStatEl = document.getElementById('suspended-words-stat');
     const scopeAllRadio = document.getElementById('scope-all');
     const scopeTextareaRadio = document.getElementById('scope-textarea');
@@ -783,6 +787,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         const lines = text.split('\n').filter(line => line.split(',').map(part => part.trim()).filter(part => part).length >= 2);
         const totalCount = lines.length;
         let newCount = 0;
+        let learnedCount = 0;
         let suspendedCount = 0;
 
         lines.forEach(line => {
@@ -793,6 +798,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                     suspendedCount++;
                 } else if (card.repetitions === 0) {
                     newCount++;
+                } else {
+                    learnedCount++;
                 }
             } else {
                 newCount++;
@@ -804,6 +811,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         totalWordsStatEl.textContent = t('totalWordsLabel').replace('{count}', totalCount);
         newWordsStatEl.textContent = t('newWordsLabel').replace('{count}', newCount);
+        learnedWordsStatEl.textContent = t('learnedWordsLabel').replace('{count}', learnedCount);
         suspendedWordsStatEl.textContent = t('suspendedWordsLabel').replace('{count}', suspendedCount);
 
         textareaStatsEl.style.display = 'flex';
@@ -1232,18 +1240,18 @@ document.addEventListener('DOMContentLoaded', async () => {
             const loadingOverlay = document.getElementById('loading-overlay');
             try {
                 const savedLang = localStorage.getItem(LANGUAGE_STORAGE_KEY);
-                const browserLang = navigator.language.split('-')[0];
-                let initialLang = 'en';
+                            const browserLang = navigator.language.split('-')[0];
+                            let initialLang = 'en';
                 
-                if (savedLang && translations[savedLang]) initialLang = savedLang;
-                else if (translations[navigator.language]) initialLang = navigator.language;
-                else if (translations[browserLang]) initialLang = browserLang;
+                            if (savedLang && translations[savedLang]) initialLang = savedLang;
+                            else if (translations[navigator.language]) initialLang = navigator.language;
+                            else if (translations[browserLang]) initialLang = browserLang;
                 
-                document.documentElement.lang = initialLang;
+                            document.documentElement.lang = initialLang;
                 
-                if (loadingOverlay) {
-                    loadingOverlay.textContent = translations[initialLang].dbInitializing;
-                }                
+                            if (loadingOverlay) {
+                                loadingOverlay.textContent = translations[initialLang].dbInitializing;
+                            }                
                 errorModal.style.display = 'none';
                 settingsModal.style.display = 'none';
     
@@ -1268,8 +1276,14 @@ document.addEventListener('DOMContentLoaded', async () => {
                 await cardManager.syncFromTextarea();
                 await showSetup();
     
-                scopeAllRadio.addEventListener('change', () => localStorage.setItem(REVIEW_SCOPE_KEY, 'all'));
-                scopeTextareaRadio.addEventListener('change', () => localStorage.setItem(REVIEW_SCOPE_KEY, 'textarea'));
+                scopeAllRadio.addEventListener('change', () => {
+                    localStorage.setItem(REVIEW_SCOPE_KEY, 'all');
+                    cardManager.updateDueCount();
+                });
+                scopeTextareaRadio.addEventListener('change', () => {
+                    localStorage.setItem(REVIEW_SCOPE_KEY, 'textarea');
+                    cardManager.updateDueCount();
+                });
 
             } catch (error) {
                 console.error("Initialization failed:", error);
