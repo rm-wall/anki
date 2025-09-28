@@ -361,8 +361,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         createSchema: () => {
             dbManager.db.run (` 
                 CREATE TABLE cards (
-                    id TEXT PRIMARY KEY,
-                    question TEXT,
+                    question TEXT PRIMARY KEY,
                     answers TEXT,
                     repetitions INTEGER,
                     efactor REAL,
@@ -403,16 +402,15 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const values = res[0].values;
                 values.forEach(row => {
                     const card = {
-                        id: row[0],
-                        question: row[1],
-                        answers: JSON.parse(row[2]),
-                        repetitions: row[3],
-                        efactor: row[4],
-                        interval: row[5],
-                        nextReviewDate: row[6],
-                        isSuspended: row[7] === 1,
+                        question: row[0],
+                        answers: JSON.parse(row[1]),
+                        repetitions: row[2],
+                        efactor: row[3],
+                        interval: row[4],
+                        nextReviewDate: row[5],
+                        isSuspended: row[6] === 1,
                     };
-                    allCards.set(card.id, card);
+                    allCards.set(card.question, card);
                 });
             }
             await cardManager.updateDueCount();
@@ -421,49 +419,60 @@ document.addEventListener('DOMContentLoaded', async () => {
         syncFromTextarea: async () => {
             const text = wordListInput.value.trim();
             const lines = text.split('\n');
-            const seenIds = new Set();
+            const seenQuestions = new Set();
 
             if (text) {
-                const stmt = dbManager.db.prepare("INSERT OR IGNORE INTO cards (id, question, answers, repetitions, efactor, interval, nextReviewDate, isSuspended) VALUES (?, ?, ?, 0, 2.5, 0, ?, 0)");
+                const insertStmt = dbManager.db.prepare("INSERT OR IGNORE INTO cards (question, answers, repetitions, efactor, interval, nextReviewDate, isSuspended) VALUES (?, ?, 0, 2.5, 0, ?, 0)");
+                const updateStmt = dbManager.db.prepare("UPDATE cards SET answers = ? WHERE question = ?");
+
                 lines.forEach(line => {
                     const parts = line.split(',').map(part => part.trim()).filter(part => part);
                     if (parts.length < 2) return;
 
-                    const id = parts.join(',');
-                    seenIds.add(id);
+                    const question = parts[0];
+                    const answers = parts;
+                    seenQuestions.add(question);
 
-                    if (!allCards.has(id)) {
+                    const existingCard = allCards.get(question);
+                    if (existingCard) {
+                        // Card exists, check if answers are different
+                        if (JSON.stringify(existingCard.answers) !== JSON.stringify(answers)) {
+                            existingCard.answers = answers;
+                            updateStmt.run([JSON.stringify(answers), question]);
+                        }
+                    } else {
+                        // New card
                         const newCard = {
-                            id: id,
-                            question: parts[0],
-                            answers: parts,
+                            question: question,
+                            answers: answers,
                             repetitions: 0,
                             efactor: 2.5,
                             interval: 0,
                             nextReviewDate: cardManager.getNowISO(),
                             isSuspended: false,
                         };
-                        allCards.set(id, newCard);
-                        stmt.run([id, parts[0], JSON.stringify(parts), newCard.nextReviewDate]);
+                        allCards.set(question, newCard);
+                        insertStmt.run([question, JSON.stringify(answers), newCard.nextReviewDate]);
                     }
                 });
-                stmt.free();
+                insertStmt.free();
+                updateStmt.free();
             }
 
-            const idsToDelete = [];
-            allCards.forEach((card, id) => {
-                if (!seenIds.has(id) && card.repetitions === 0) {
-                    idsToDelete.push(id);
+            const questionsToDelete = [];
+            allCards.forEach((card, question) => {
+                if (!seenQuestions.has(question) && card.repetitions === 0) {
+                    questionsToDelete.push(question);
                 }
             });
 
-            if (idsToDelete.length > 0) {
-                const stmt = dbManager.db.prepare("DELETE FROM cards WHERE id = ?");
-                idsToDelete.forEach(id => {
-                    allCards.delete(id);
-                    stmt.run([id]);
+            if (questionsToDelete.length > 0) {
+                const deleteStmt = dbManager.db.prepare("DELETE FROM cards WHERE question = ?");
+                questionsToDelete.forEach(question => {
+                    allCards.delete(question);
+                    deleteStmt.run([question]);
                 });
-                stmt.free();
+                deleteStmt.free();
             }
 
             await dbManager.saveDbToIndexedDB();
@@ -476,25 +485,25 @@ document.addEventListener('DOMContentLoaded', async () => {
             let newCardsAdded = 0;
 
             if (text) {
-                const stmt = dbManager.db.prepare("INSERT OR IGNORE INTO cards (id, question, answers, repetitions, efactor, interval, nextReviewDate, isSuspended) VALUES (?, ?, ?, 0, 2.5, 0, ?, 0)");
+                const stmt = dbManager.db.prepare("INSERT OR IGNORE INTO cards (question, answers, repetitions, efactor, interval, nextReviewDate, isSuspended) VALUES (?, ?, 0, 2.5, 0, ?, 0)");
                 lines.forEach(line => {
                     const parts = line.split(',').map(part => part.trim()).filter(part => part);
                     if (parts.length < 2) return;
 
-                    const id = parts.join(',');
-                    if (!allCards.has(id)) {
+                    const question = parts[0];
+                    const answers = parts;
+                    if (!allCards.has(question)) {
                         const newCard = {
-                            id: id,
-                            question: parts[0],
-                            answers: parts,
+                            question: question,
+                            answers: answers,
                             repetitions: 0,
                             efactor: 2.5,
                             interval: 0,
                             nextReviewDate: cardManager.getNowISO(),
                             isSuspended: false,
                         };
-                        allCards.set(id, newCard);
-                        stmt.run([id, parts[0], JSON.stringify(parts), newCard.nextReviewDate]);
+                        allCards.set(question, newCard);
+                        stmt.run([question, JSON.stringify(answers), newCard.nextReviewDate]);
                         newCardsAdded++;
                     }
                 });
@@ -519,8 +528,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             return Array.from(allCards.values()).filter(card => !card.isSuspended);
         },
 
-        update: async (cardId, isCorrect) => {
-            const card = allCards.get(cardId);
+        update: async (cardQuestion, isCorrect) => {
+            const card = allCards.get(cardQuestion);
             if (!card) return;
 
             const getNextIntervalInMinutes = (setting) => {
@@ -553,29 +562,29 @@ document.addEventListener('DOMContentLoaded', async () => {
             card.nextReviewDate = nextReview.toISOString();
 
             dbManager.db.run (
-                "UPDATE cards SET repetitions = ?, efactor = ?, interval = ?, nextReviewDate = ? WHERE id = ?",
-                [card.repetitions, card.efactor, card.interval, card.nextReviewDate, card.id]
+                "UPDATE cards SET repetitions = ?, efactor = ?, interval = ?, nextReviewDate = ? WHERE question = ?",
+                [card.repetitions, card.efactor, card.interval, card.nextReviewDate, card.question]
             );
             await dbManager.saveDbToIndexedDB();
         },
 
-        suspend: async (cardId) => {
-            const card = allCards.get(cardId);
+        suspend: async (cardQuestion) => {
+            const card = allCards.get(cardQuestion);
             if (card) {
                 card.isSuspended = true;
-                dbManager.db.run("UPDATE cards SET isSuspended = 1 WHERE id = ?", [cardId]);
+                dbManager.db.run("UPDATE cards SET isSuspended = 1 WHERE question = ?", [cardQuestion]);
                 await dbManager.saveDbToIndexedDB();
                 await cardManager.updateDueCount();
                 updateTextareaStats();
             }
         },
 
-        restore: async (cardId) => {
-            const card = allCards.get(cardId);
+        restore: async (cardQuestion) => {
+            const card = allCards.get(cardQuestion);
             if (card) {
                 card.isSuspended = false;
                 card.nextReviewDate = cardManager.getNowISO();
-                dbManager.db.run("UPDATE cards SET isSuspended = 0, nextReviewDate = ? WHERE id = ?", [card.nextReviewDate, cardId]);
+                dbManager.db.run("UPDATE cards SET isSuspended = 0, nextReviewDate = ? WHERE question = ?", [card.nextReviewDate, cardQuestion]);
                 await dbManager.saveDbToIndexedDB();
                 await cardManager.updateDueCount();
                 updateTextareaStats();
@@ -590,9 +599,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             if (scopeIsTextarea) {
                 const text = wordListInput.value.trim();
-                const currentIds = new Set(text.split('\n').map(line => line.split(',').map(part => part.trim()).filter(part => part).join(',')));
-                dueCards = cardManager.getDueCards().filter(card => currentIds.has(card.id));
-                activeCards = cardManager.getAllActiveCards().filter(card => currentIds.has(card.id));
+                const currentIds = new Set(text.split('\n').map(line => line.split(',')[0].trim()));
+                dueCards = cardManager.getDueCards().filter(card => currentIds.has(card.question));
+                activeCards = cardManager.getAllActiveCards().filter(card => currentIds.has(card.question));
             } else {
                 dueCards = cardManager.getDueCards();
                 activeCards = cardManager.getAllActiveCards();
@@ -645,8 +654,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         let dueCards;
         if (document.getElementById('scope-textarea').checked) {
             const text = wordListInput.value.trim();
-            const currentIds = new Set(text.split('\n').map(line => line.split(',').map(part => part.trim()).filter(part => part).join(',')));
-            dueCards = cardManager.getDueCards().filter(card => currentIds.has(card.id));
+            const currentIds = new Set(text.split('\n').map(line => line.split(',')[0].trim()));
+            dueCards = cardManager.getDueCards().filter(card => currentIds.has(card.question));
         } else {
             dueCards = cardManager.getDueCards();
         }
@@ -661,8 +670,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         let activeCards;
         if (document.getElementById('scope-textarea').checked) {
             const text = wordListInput.value.trim();
-            const currentIds = new Set(text.split('\n').map(line => line.split(',').map(part => part.trim()).filter(part => part).join(',')));
-            activeCards = Array.from(allCards.values()).filter(card => !card.isSuspended && currentIds.has(card.id));
+            const currentIds = new Set(text.split('\n').map(line => line.split(',')[0].trim()));
+            activeCards = Array.from(allCards.values()).filter(card => !card.isSuspended && currentIds.has(card.question));
         } else {
             activeCards = cardManager.getAllActiveCards();
         }
@@ -751,7 +760,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         feedbackEl.className = 'correct';
         sessionCorrectCount++;
         if (!isCramming) {
-            await cardManager.update(card.id, true);
+            await cardManager.update(card.question, true);
         }
     }
 
@@ -760,14 +769,14 @@ document.addEventListener('DOMContentLoaded', async () => {
         feedbackEl.textContent = feedbackText.replace('{answers}', card.answers.join(' / '));
         feedbackEl.className = 'incorrect';
         sessionIncorrectCount++;
-        if (!sessionIncorrectCards.some(c => c.id === card.id)) {
+        if (!sessionIncorrectCards.some(c => c.question === card.question)) {
             sessionIncorrectCards.push(card);
         }
-        if (!isCramming && !reviewAgainPile.some(c => c.id === card.id)) {
+        if (!isCramming && !reviewAgainPile.some(c => c.question === card.question)) {
             reviewAgainPile.push(card);
         }
         if (!isCramming) {
-            await cardManager.update(card.id, false);
+            await cardManager.update(card.question, false);
         }
     }
 
@@ -785,8 +794,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         let suspendedCount = 0;
 
         lines.forEach(line => {
-            const id = line.split(',').map(part => part.trim()).filter(part => part).join(',');
-            const card = allCards.get(id);
+            const question = line.split(',')[0].trim();
+            const card = allCards.get(question);
             if (card) {
                 if (card.isSuspended) {
                     suspendedCount++;
@@ -794,7 +803,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                     newCount++;
                 }
             } else {
-                // If card is not in allCards, it's a new card that syncFromTextarea will add
                 newCount++;
             }
         });
@@ -846,8 +854,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         let sourceCards;
         if (viewType === 'current') {
             const text = wordListInput.value.trim();
-            const currentIds = new Set(text.split('\n').map(line => line.split(',').map(part => part.trim()).filter(part => part).join(',')));
-            sourceCards = Array.from(allCards.values()).filter(card => currentIds.has(card.id));
+            const currentIds = new Set(text.split('\n').map(line => line.split(',')[0].trim()));
+            sourceCards = Array.from(allCards.values()).filter(card => currentIds.has(card.question));
         } else {
             sourceCards = Array.from(allCards.values());
         }
@@ -891,8 +899,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                     }
 
                     const actionButton = card.isSuspended
-                        ? `<button class="action-btn restore-btn" data-action="restore" data-card-id="${card.id}">${t('restore', 'Restore')}</button>`
-                        : `<button class="action-btn suspend-btn" data-action="suspend" data-card-id="${card.id}">${t('suspend', 'Suspend')}</button>`;
+                        ? `<button class="action-btn restore-btn" data-action="restore" data-card-id="${card.question}">${t('restore', 'Restore')}</button>`
+                        : `<button class="action-btn suspend-btn" data-action="suspend" data-card-id="${card.question}">${t('suspend', 'Suspend')}</button>`;
 
                     const intervalInMinutes = card.interval || 0;
                     let intervalDisplay;
@@ -968,12 +976,12 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // --- I/O Functions ---
     function exportCards() {
-        const cardIds = Array.from(allCards.keys());
-        if (cardIds.length === 0) {
+        const cardData = Array.from(allCards.values()).map(card => `${card.question},${card.answers.slice(1).join(',')}`);
+        if (cardData.length === 0) {
             alert('No cards to export.');
             return;
         }
-        const data = cardIds.join('\n');
+        const data = cardData.join('\n');
         const blob = new Blob([data], { type: 'text/plain' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
