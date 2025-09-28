@@ -971,13 +971,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         const lang = languageSelect.value;
         const t = (key, fallback) => translations[lang][key] || fallback;
 
-        const exportType = prompt(`${t('exportPrompt', 'Which type of cards do you want to export?')} (1 = ${t('exportActive', 'Active')}, 2 = ${t('exportSuspended', 'Suspended')})`);
+        const activeFilterBtn = modalIncorrectListEl.querySelector('.tab-btn[data-filter].active');
+        const filterType = activeFilterBtn ? activeFilterBtn.dataset.filter : 'active';
 
-        if (!exportType || !['1', '2'].includes(exportType)) {
-            return;
-        }
-
-        const isExportingActive = exportType === '1';
+        const isExportingActive = filterType === 'active';
         const status = isExportingActive ? 'active' : 'suspended';
         
         const cardsToExport = Array.from(allCards.values()).filter(card => isExportingActive ? !card.isSuspended : card.isSuspended);
