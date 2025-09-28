@@ -459,22 +459,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                 updateStmt.free();
             }
 
-            const questionsToDelete = [];
-            allCards.forEach((card, question) => {
-                if (!seenQuestions.has(question) && card.repetitions === 0 && !card.isSuspended) {
-                    questionsToDelete.push(question);
-                }
-            });
-
-            if (questionsToDelete.length > 0) {
-                const deleteStmt = dbManager.db.prepare("DELETE FROM cards WHERE question = ?");
-                questionsToDelete.forEach(question => {
-                    allCards.delete(question);
-                    deleteStmt.run([question]);
-                });
-                deleteStmt.free();
-            }
-
             await dbManager.saveDbToIndexedDB();
             await cardManager.updateDueCount();
             updateTextareaStats();
