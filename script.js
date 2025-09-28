@@ -461,7 +461,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             const questionsToDelete = [];
             allCards.forEach((card, question) => {
-                if (!seenQuestions.has(question) && card.repetitions === 0) {
+                if (!seenQuestions.has(question) && card.repetitions === 0 && !card.isSuspended) {
                     questionsToDelete.push(question);
                 }
             });
