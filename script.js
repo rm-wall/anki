@@ -21,6 +21,7 @@ const translations = {
         confirmClearCache: '确定要清空所有本地数据吗？这将删除所有卡片记录和设置。此操作不可撤销。',
         answerPlaceholder: '输入答案后按回车',
         continueButton: '继续',
+        redoButton: '重新练习',
         terminateButton: '终止测验',
         summaryHeading: '本轮学习完成！',
         correctLabel: '正确',
@@ -101,6 +102,7 @@ const translations = {
         confirmClearCache: 'Are you sure you want to clear all local data? This will delete all card history and settings. This action cannot be undone.',
         answerPlaceholder: 'Type answer and press Enter',
         continueButton: 'Continue',
+        redoButton: 'Practice Again',
         terminateButton: 'End Test',
         summaryHeading: 'Session Finished!',
         correctLabel: 'Correct',
@@ -181,6 +183,7 @@ const translations = {
         confirmClearCache: '本当にすべてのローカルデータをクリアしますか？これには、すべてのカード記録と言語設定が含まれます。この操作は元に戻せません。',
         answerPlaceholder: '答えを入力してEnterキーを押す',
         continueButton: '次へ',
+        redoButton: '再練習',
         terminateButton: 'テスト終了',
         summaryHeading: 'セッション完了！',
         correctLabel: '正解',
@@ -257,6 +260,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const showErrorsButton = document.getElementById('show-errors-button');
     const clearCacheButton = document.getElementById('clear-cache-button');
     const continueButton = document.getElementById('continue-button');
+    const redoButton = document.getElementById('redo-button');
     const randomOrderCheckbox = document.getElementById('random-order-checkbox');
     const fileDropZone = document.getElementById('file-drop-zone');
     const fileInput = document.getElementById('file-input');
@@ -725,8 +729,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (processedAnswers.includes(processedUserAnswer)) {
             isAnswerCorrect = true;
             await handleCorrectAnswer(currentCard);
-            if (autoAdvanceCheckbox.checked) setTimeout(proceedToNextCard, 1500);
-            else continueButton.style.display = 'inline-block';
+            if (autoAdvanceCheckbox.checked) {
+                setTimeout(proceedToNextCard, 1500);
+            } else {
+                continueButton.style.display = 'inline-block';
+                redoButton.style.display = 'inline-block';
+            }
             answerInput.blur();
         } else {
             isAnswerCorrect = false;
@@ -747,6 +755,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         feedbackEl.className = '';
         answerInput.disabled = false;
         continueButton.style.display = 'none';
+        redoButton.style.display = 'none';
         displayNextCard();
     }
 
@@ -1122,6 +1131,18 @@ document.addEventListener('DOMContentLoaded', async () => {
     // --- Event Listeners ---
     languageSelect.addEventListener('change', (event) => setLanguage(event.target.value));
     showErrorsButton.addEventListener('click', showAllCardsModal);
+
+    redoButton.addEventListener('click', () => {
+        answerInput.value = '';
+        answerInput.disabled = false;
+        feedbackEl.innerHTML = '&nbsp;';
+        feedbackEl.className = '';
+        continueButton.style.display = 'none';
+        redoButton.style.display = 'none';
+        isChecking = false;
+        isAnswerCorrect = false;
+        answerInput.focus();
+    });
 
     continueButton.addEventListener('click', proceedToNextCard);
     answerInput.addEventListener('keydown', (event) => {
