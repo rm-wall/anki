@@ -142,6 +142,21 @@
         </div>
     </div>
 
+    <script>
+        (function() {
+            const translations = {
+                'zh-CN': '正在初始化数据库...',
+                'en': 'Initializing Database...',
+                'ja': 'データベースを初期化しています...'
+            };
+            const lang = navigator.language || navigator.userLanguage;
+            const loadingText = translations[lang] || translations[lang.split('-')[0]] || translations['en'];
+            const overlay = document.getElementById('loading-overlay');
+            if (overlay) {
+                overlay.textContent = loadingText;
+            }
+        })();
+    </script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.3/sql-wasm.js"></script>
     <script src="script.js"></script>
     <footer id="last-updated"></footer>
