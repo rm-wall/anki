@@ -463,11 +463,13 @@ document.addEventListener('DOMContentLoaded', async () => {
         syncFromTextarea: async () => {
             const text = wordListInput.value.trim();
             const lines = text.split('\n');
-            const seenQuestions = new Set();
-
+            
             if (text) {
-                const insertStmt = dbManager.db.prepare("INSERT OR IGNORE INTO cards (question, answers, repetitions, efactor, interval, nextReviewDate, isSuspended, isStarred) VALUES (?, ?, 0, 2.5, 0, ?, 0, 0)");
-                const updateStmt = dbManager.db.prepare("UPDATE cards SET answers = ? WHERE question = ?");
+                const upsertStmt = dbManager.db.prepare(`
+                    INSERT INTO cards (question, answers, repetitions, efactor, interval, nextReviewDate, isSuspended, isStarred) 
+                    VALUES (?, ?, 0, 2.5, 0, ?, 0, 0) 
+                    ON CONFLICT(question) DO UPDATE SET answers=excluded.answers;
+                `);
 
                 lines.forEach(line => {
                     const parts = line.split(',').map(part => part.trim()).filter(part => part);
@@ -475,31 +477,28 @@ document.addEventListener('DOMContentLoaded', async () => {
 
                     const question = parts[0];
                     const answers = parts;
-                    seenQuestions.add(question);
+                    const now = cardManager.getNowISO();
 
+                    upsertStmt.run([question, JSON.stringify(answers), now]);
+
+                    // Update in-memory map
                     const existingCard = allCards.get(question);
                     if (existingCard) {
-                        if (JSON.stringify(existingCard.answers) !== JSON.stringify(answers)) {
-                            existingCard.answers = answers;
-                            updateStmt.run([JSON.stringify(answers), question]);
-                        }
+                        existingCard.answers = answers;
                     } else {
-                        const newCard = {
+                        allCards.set(question, {
                             question: question,
                             answers: answers,
                             repetitions: 0,
                             efactor: 2.5,
                             interval: 0,
-                            nextReviewDate: cardManager.getNowISO(),
+                            nextReviewDate: now,
                             isSuspended: false,
                             isStarred: false,
-                        };
-                        allCards.set(question, newCard);
-                        insertStmt.run([question, JSON.stringify(answers), newCard.nextReviewDate]);
+                        });
                     }
                 });
-                insertStmt.free();
-                updateStmt.free();
+                upsertStmt.free();
             }
 
             await dbManager.saveDbToIndexedDB();
@@ -657,17 +656,20 @@ document.addEventListener('DOMContentLoaded', async () => {
         },
 
         updateDueCount: async () => {
-            const scopeIsTextarea = document.getElementById('scope-textarea').checked;
+            const scope = document.querySelector('input[name="review-scope"]:checked').value;
 
             let dueCards;
             let activeCards;
 
-            if (scopeIsTextarea) {
+            if (scope === 'textarea') {
                 const text = wordListInput.value.trim();
                 const currentIds = new Set(text.split('\n').map(line => line.split(',')[0].trim()));
                 dueCards = cardManager.getDueCards().filter(card => currentIds.has(card.question));
                 activeCards = cardManager.getAllActiveCards().filter(card => currentIds.has(card.question));
-            } else {
+            } else if (scope === 'starred') {
+                dueCards = cardManager.getDueCards().filter(card => card.isStarred);
+                activeCards = cardManager.getAllActiveCards().filter(card => card.isStarred);
+            } else { // scope === 'all'
                 dueCards = cardManager.getDueCards();
                 activeCards = cardManager.getAllActiveCards();
             }
@@ -1046,7 +1048,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 ${ioButtonsHTML}
             </div>`;
 
-        modalIncorrectListEl.innerHTML = `${toolbarHTML}<table class="cards-table">${tableHeader}${tableBody}</table>`;
+        modalIncorrectListEl.innerHTML = `${toolbarHTML}<div class="table-scroll-container"><table class="cards-table">${tableHeader}${tableBody}</table></div>`;
     }
 
     function showAllCardsModal() {
@@ -1241,9 +1243,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
     restartButton.addEventListener('click', showSetup);
     terminateButton.addEventListener('click', showSummary);
-    closeModalButton.addEventListener('click', () => errorModal.style.display = 'none');
+
+    const closeAllCardsModal = () => {
+        errorModal.style.display = 'none';
+        cardManager.updateDueCount();
+    };
+
+    closeModalButton.addEventListener('click', closeAllCardsModal);
     window.addEventListener('click', (event) => {
-        if (event.target == errorModal) errorModal.style.display = 'none';
+        if (event.target == errorModal) closeAllCardsModal();
         if (event.target == settingsModal) settingsModal.style.display = 'none';
     });
     wordListInput.addEventListener('input', async () => {
