@@ -291,7 +291,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     db: null,
                     init: async () => {
                         try {
-                            const SQL = await initSqlJs({ locateFile: file => `https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.3/${file}` });
+                            const SQL = await initSqlJs({ locateFile: file => `lib/sql.js/${file}` });
                             const dbFile = await dbManager.loadDbFromIndexedDB();
             
                             if (dbFile) {
@@ -299,7 +299,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                             } else {
                                 dbManager.db = new SQL.Database();
                                 dbManager.createSchema();
-                                await dbManager.migrateFromLocalStorage();
                             }
                             await dbManager.saveDbToIndexedDB();
                         } catch (err) {
@@ -365,34 +364,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                                 value TEXT
                             );
                         `);
-                    },
-                    migrateFromLocalStorage: async () => {
-                        const legacyCards = JSON.parse(localStorage.getItem(LEGACY_CARDS_STORAGE_KEY) || '[]');
-                        if (legacyCards.length > 0) {
-                            const stmt = dbManager.db.prepare("INSERT INTO cards (id, question, answers, repetitions, efactor, interval, nextReviewDate, isSuspended) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
-                            legacyCards.forEach(card => {
-                                stmt.run([
-                                    card.id,
-                                    card.question,
-                                    JSON.stringify(card.answers),
-                                    card.repetitions,
-                                    card.efactor,
-                                    card.interval,
-                                    card.nextReviewDate,
-                                    card.isSuspended ? 1 : 0
-                                ]);
-                            });
-                            stmt.free();
-                            localStorage.removeItem(LEGACY_CARDS_STORAGE_KEY);
-                        }
-            
-                        const legacySettings = JSON.parse(localStorage.getItem(LEGACY_SETTINGS_STORAGE_KEY) || '{}');
-                        if (Object.keys(legacySettings).length > 0) {
-                            const stmt = dbManager.db.prepare("INSERT INTO settings (key, value) VALUES (?, ?)");
-                            stmt.run(['srsSettings', JSON.stringify(legacySettings)]);
-                            stmt.free();
-                            localStorage.removeItem(LEGACY_SETTINGS_STORAGE_KEY);
-                        }
                     },
                     clearAllData: async () => {
                         return new Promise((resolve, reject) => {
