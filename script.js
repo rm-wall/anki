@@ -1277,6 +1277,9 @@ document.addEventListener('DOMContentLoaded', async () => {
             renderAllCardsModal(viewType, filterType);
 
         } else if (target.matches('.action-btn')) {
+            const scrollContainer = modalIncorrectListEl.querySelector('.table-scroll-container');
+            const previousScrollTop = scrollContainer ? scrollContainer.scrollTop : 0;
+
             const action = target.dataset.action;
             const cardId = target.dataset.cardId;
             if (action === 'suspend') await cardManager.suspend(cardId);
@@ -1294,6 +1297,11 @@ document.addEventListener('DOMContentLoaded', async () => {
                 activeViewBtn ? activeViewBtn.dataset.view : 'current',
                 activeFilterBtn ? activeFilterBtn.dataset.filter : 'active'
             );
+
+            const newScrollContainer = modalIncorrectListEl.querySelector('.table-scroll-container');
+            if (newScrollContainer) {
+                newScrollContainer.scrollTop = previousScrollTop;
+            }
         }
     });
 
