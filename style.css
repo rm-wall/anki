@@ -48,6 +48,7 @@ h1 {
 }
 
 #card {
+    position: relative;
     margin-top: 20px;
 }
 
@@ -507,6 +508,19 @@ button:disabled {
     background-color: #2ca349;
 }
 
+.star-toggle-btn {
+    background: none;
+    border: none;
+    font-size: 1.2rem;
+    cursor: pointer;
+    padding: 0;
+    color: #ccc;
+}
+
+.star-toggle-btn.starred {
+    color: #ffcc00;
+}
+
 .tab-btn {
     padding: 8px 15px;
     border: 1px solid #ccc;
@@ -544,6 +558,26 @@ button:disabled {
 
 #cram-button:hover {
     background-color: #3d3b9e;
+}
+
+.star-button {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    background: none;
+    border: none;
+    font-size: 2rem;
+    color: #ffcc00;
+    cursor: pointer;
+    padding: 0;
+}
+
+.star-button.starred {
+    color: #ffcc00;
+}
+
+.star-button:not(.starred) {
+    color: #ccc;
 }
 
 #summary #restart-button {

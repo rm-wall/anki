@@ -79,7 +79,10 @@ const translations = {
         suspendedWordsLabel: '暂停: {count}',
         exportPrompt: '要导出哪种类型的卡片？',
         exportActive: '活动卡片',
-        exportSuspended: '暂停卡片'
+        exportSuspended: '暂停卡片',
+        starredWordsLabel: '星标: {count}',
+        scopeStarredLabel: '星标单词',
+        starredCards: '星标卡片'
     },
     'en': {
         title: 'Anki Program',
@@ -160,7 +163,10 @@ const translations = {
         suspendedWordsLabel: 'Suspended: {count}',
         exportPrompt: 'Which type of cards do you want to export?',
         exportActive: 'Active Cards',
-        exportSuspended: 'Suspended Cards'
+        exportSuspended: 'Suspended Cards',
+        starredWordsLabel: 'Starred: {count}',
+        scopeStarredLabel: 'Starred Words',
+        starredCards: 'Starred Cards'
     },
     'ja': {
         title: '暗記プログラム',
@@ -241,7 +247,10 @@ const translations = {
         suspendedWordsLabel: '一時停止: {count}',
         exportPrompt: 'どのタイプのカードをエクスポートしますか？',
         exportActive: 'アクティブなカード',
-        exportSuspended: '一時停止中のカード'
+        exportSuspended: '一時停止中のカード',
+        starredWordsLabel: 'スター付き: {count}',
+        scopeStarredLabel: 'スター付き単語',
+        starredCards: 'スター付きカード'
     }
 };
 document.addEventListener('DOMContentLoaded', async () => {
@@ -288,8 +297,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     const newWordsStatEl = document.getElementById('new-words-stat');
     const learnedWordsStatEl = document.getElementById('learned-words-stat');
     const suspendedWordsStatEl = document.getElementById('suspended-words-stat');
+    const starredWordsStatEl = document.getElementById('starred-words-stat');
     const scopeAllRadio = document.getElementById('scope-all');
     const scopeTextareaRadio = document.getElementById('scope-textarea');
+    const scopeStarredRadio = document.getElementById('scope-starred');
+    const starButton = document.getElementById('star-button');
 
     let cramButton;
 
@@ -326,6 +338,12 @@ document.addEventListener('DOMContentLoaded', async () => {
 
                 if (dbFile) {
                     dbManager.db = new SQL.Database(dbFile);
+                    // Simple migration check
+                    const res = dbManager.db.exec("PRAGMA table_info(cards);");
+                    const columns = res[0].values.map(row => row[1]);
+                    if (!columns.includes('isStarred')) {
+                        dbManager.db.run("ALTER TABLE cards ADD COLUMN isStarred INTEGER DEFAULT 0");
+                    }
                 } else {
                     dbManager.db = new SQL.Database();
                     dbManager.createSchema();
@@ -384,7 +402,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                     efactor REAL,
                     interval INTEGER,
                     nextReviewDate TEXT,
-                    isSuspended INTEGER
+                    isSuspended INTEGER,
+                    isStarred INTEGER DEFAULT 0
                 );
             `);
             dbManager.db.run (`
@@ -427,6 +446,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                         interval: row[4],
                         nextReviewDate: row[5],
                         isSuspended: row[6] === 1,
+                        isStarred: row[7] === 1,
                     };
                     allCards.set(card.question, card);
                 });
@@ -440,7 +460,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             const seenQuestions = new Set();
 
             if (text) {
-                const insertStmt = dbManager.db.prepare("INSERT OR IGNORE INTO cards (question, answers, repetitions, efactor, interval, nextReviewDate, isSuspended) VALUES (?, ?, 0, 2.5, 0, ?, 0)");
+                const insertStmt = dbManager.db.prepare("INSERT OR IGNORE INTO cards (question, answers, repetitions, efactor, interval, nextReviewDate, isSuspended, isStarred) VALUES (?, ?, 0, 2.5, 0, ?, 0, 0)");
                 const updateStmt = dbManager.db.prepare("UPDATE cards SET answers = ? WHERE question = ?");
 
                 lines.forEach(line => {
@@ -466,6 +486,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                             interval: 0,
                             nextReviewDate: cardManager.getNowISO(),
                             isSuspended: false,
+                            isStarred: false,
                         };
                         allCards.set(question, newCard);
                         insertStmt.run([question, JSON.stringify(answers), newCard.nextReviewDate]);
@@ -485,7 +506,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             let newCardsAdded = 0;
 
             if (text) {
-                const stmt = dbManager.db.prepare("INSERT OR IGNORE INTO cards (question, answers, repetitions, efactor, interval, nextReviewDate, isSuspended) VALUES (?, ?, 0, 2.5, 0, ?, 0)");
+                const stmt = dbManager.db.prepare("INSERT OR IGNORE INTO cards (question, answers, repetitions, efactor, interval, nextReviewDate, isSuspended, isStarred) VALUES (?, ?, 0, 2.5, 0, ?, 0, 0)");
                 lines.forEach(line => {
                     const parts = line.split(',').map(part => part.trim()).filter(part => part);
                     if (parts.length < 2) return;
@@ -501,6 +522,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                             interval: 0,
                             nextReviewDate: cardManager.getNowISO(),
                             isSuspended: false,
+                            isStarred: false,
                         };
                         allCards.set(question, newCard);
                         stmt.run([question, JSON.stringify(answers), newCard.nextReviewDate]);
@@ -591,6 +613,16 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         },
 
+        toggleStar: async (cardQuestion) => {
+            const card = allCards.get(cardQuestion);
+            if (card) {
+                card.isStarred = !card.isStarred;
+                dbManager.db.run("UPDATE cards SET isStarred = ? WHERE question = ?", [card.isStarred ? 1 : 0, cardQuestion]);
+                await dbManager.saveDbToIndexedDB();
+                updateTextareaStats();
+            }
+        },
+
         updateDueCount: async () => {
             const scopeIsTextarea = document.getElementById('scope-textarea').checked;
 
@@ -652,10 +684,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         await cardManager.syncFromTextarea();
 
         let dueCards;
-        if (document.getElementById('scope-textarea').checked) {
+        if (scopeTextareaRadio.checked) {
             const text = wordListInput.value.trim();
             const currentIds = new Set(text.split('\n').map(line => line.split(',')[0].trim()));
             dueCards = cardManager.getDueCards().filter(card => currentIds.has(card.question));
+        } else if (scopeStarredRadio.checked) {
+            dueCards = cardManager.getDueCards().filter(card => card.isStarred);
         } else {
             dueCards = cardManager.getDueCards();
         }
@@ -668,10 +702,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         await cardManager.syncFromTextarea();
 
         let activeCards;
-        if (document.getElementById('scope-textarea').checked) {
+        if (scopeTextareaRadio.checked) {
             const text = wordListInput.value.trim();
             const currentIds = new Set(text.split('\n').map(line => line.split(',')[0].trim()));
             activeCards = Array.from(allCards.values()).filter(card => !card.isSuspended && currentIds.has(card.question));
+        } else if (scopeStarredRadio.checked) {
+            activeCards = Array.from(allCards.values()).filter(card => !card.isSuspended && card.isStarred);
         } else {
             activeCards = cardManager.getAllActiveCards();
         }
@@ -681,9 +717,13 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     function displayNextCard() {
         if (currentCardIndex < sessionCards.length) {
-            questionEl.textContent = sessionCards[currentCardIndex].question;
+            const currentCard = sessionCards[currentCardIndex];
+            questionEl.textContent = currentCard.question;
             answerInput.value = '';
             answerInput.focus();
+
+            starButton.textContent = currentCard.isStarred ? '★' : '☆';
+            starButton.classList.toggle('starred', currentCard.isStarred);
         } else {
             if (!isCramming && reviewAgainPile.length > 0) {
                 sessionCards = [...reviewAgainPile];
@@ -798,11 +838,15 @@ document.addEventListener('DOMContentLoaded', async () => {
         let newCount = 0;
         let learnedCount = 0;
         let suspendedCount = 0;
+        let starredCount = 0;
 
         lines.forEach(line => {
             const question = line.split(',')[0].trim();
             const card = allCards.get(question);
             if (card) {
+                if (card.isStarred) {
+                    starredCount++;
+                }
                 if (card.isSuspended) {
                     suspendedCount++;
                 } else if (card.repetitions === 0) {
@@ -822,6 +866,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         newWordsStatEl.textContent = t('newWordsLabel').replace('{count}', newCount);
         learnedWordsStatEl.textContent = t('learnedWordsLabel').replace('{count}', learnedCount);
         suspendedWordsStatEl.textContent = t('suspendedWordsLabel').replace('{count}', suspendedCount);
+        starredWordsStatEl.textContent = t('starredWordsLabel').replace('{count}', starredCount);
 
         textareaStatsEl.style.display = 'flex';
     }
@@ -871,14 +916,18 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         const activeCount = sourceCards.filter(card => !card.isSuspended).length;
         const suspendedCount = sourceCards.filter(card => card.isSuspended).length;
+        const starredCount = sourceCards.filter(card => card.isStarred).length;
 
         const filteredCards = sourceCards.filter(card => {
-            return filterType === 'suspended' ? card.isSuspended : !card.isSuspended;
+            if (filterType === 'suspended') return card.isSuspended;
+            if (filterType === 'starred') return card.isStarred;
+            return !card.isSuspended;
         });
 
         const tableHeader = `
             <thead>
                 <tr>
+                    <th>★</th>
                     <th>${t('cardQuestion', 'Question')}</th>
                     <th>${t('cardAnswers', 'Answers')}</th>
                     <th>${t('cardNextReview', 'Next Review')}</th>
@@ -891,7 +940,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         let tableBody;
         if (filteredCards.length === 0) {
-            tableBody = `<tbody><tr><td colspan="7" style="text-align: center;">${t('noCardsFound', 'No cards found.')}</td></tr></tbody>`;
+            tableBody = `<tbody><tr><td colspan="8" style="text-align: center;">${t('noCardsFound', 'No cards found.')}</td></tr></tbody>`;
         } else {
             tableBody = `<tbody>` + filteredCards
                 .sort((a, b) => a.nextReviewDate.localeCompare(b.nextReviewDate))
@@ -921,8 +970,11 @@ document.addEventListener('DOMContentLoaded', async () => {
                         intervalDisplay = `${(intervalInMinutes / 1440).toFixed(1)}d`;
                     }
 
+                    const starDisplay = `<button class="action-btn star-toggle-btn ${card.isStarred ? 'starred' : ''}" data-action="toggleStar" data-card-id="${card.question}">${card.isStarred ? '★' : '☆'}</button>`;
+
                     return `
                         <tr class="${card.isSuspended ? 'suspended-row' : ''}">
+                            <td>${starDisplay}</td>
                             <td>${card.question || ''}</td>
                             <td>${(card.answers || []).slice(1).join(', ')}</td>
                             <td>${formatReviewDate(card.nextReviewDate, lang)}</td>
@@ -953,6 +1005,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     <div class="filter-tabs">
                         <button class="tab-btn ${filterType === 'active' ? 'active' : ''}" data-filter="active">${t('activeCards', 'Active Cards')} (${activeCount})</button>
                         <button class="tab-btn ${filterType === 'suspended' ? 'active' : ''}" data-filter="suspended">${t('suspendedCards', 'Suspended')} (${suspendedCount})</button>
+                        <button class="tab-btn ${filterType === 'starred' ? 'active' : ''}" data-filter="starred">${t('starredCards', 'Starred Cards')} (${starredCount})</button>
                     </div>
                 </div>
                 ${ioButtonsHTML}
@@ -1182,6 +1235,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             const cardId = target.dataset.cardId;
             if (action === 'suspend') await cardManager.suspend(cardId);
             else if (action === 'restore') await cardManager.restore(cardId);
+            else if (action === 'toggleStar') await cardManager.toggleStar(cardId);
 
             const activeViewBtn = modalIncorrectListEl.querySelector('.tab-btn[data-view].active');
             const activeFilterBtn = modalIncorrectListEl.querySelector('.tab-btn[data-filter].active');
@@ -1189,6 +1243,15 @@ document.addEventListener('DOMContentLoaded', async () => {
                 activeViewBtn ? activeViewBtn.dataset.view : 'current',
                 activeFilterBtn ? activeFilterBtn.dataset.filter : 'active'
             );
+        }
+    });
+
+    starButton.addEventListener('click', async () => {
+        if (sessionCards.length > 0) {
+            const currentCard = sessionCards[currentCardIndex];
+            await cardManager.toggleStar(currentCard.question);
+            starButton.textContent = currentCard.isStarred ? '★' : '☆';
+            starButton.classList.toggle('starred', currentCard.isStarred);
         }
     });
 
@@ -1288,6 +1351,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const savedScope = localStorage.getItem(REVIEW_SCOPE_KEY);
                 if (savedScope === 'textarea') {
                     scopeTextareaRadio.checked = true;
+                } else if (savedScope === 'starred') {
+                    scopeStarredRadio.checked = true;
                 } else {
                     scopeAllRadio.checked = true;
                 }
@@ -1303,6 +1368,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                 });
                 scopeTextareaRadio.addEventListener('change', () => {
                     localStorage.setItem(REVIEW_SCOPE_KEY, 'textarea');
+                    cardManager.updateDueCount();
+                });
+                scopeStarredRadio.addEventListener('change', () => {
+                    localStorage.setItem(REVIEW_SCOPE_KEY, 'starred');
                     cardManager.updateDueCount();
                 });
 
