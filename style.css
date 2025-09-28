@@ -508,6 +508,13 @@ button:disabled {
     background-color: #2ca349;
 }
 
+.delete-btn {
+    background-color: #ff3b30;
+}
+.delete-btn:hover {
+    background-color: #c7001e;
+}
+
 .star-toggle-btn {
     background: none;
     border: none;

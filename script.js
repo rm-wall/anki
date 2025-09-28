@@ -82,7 +82,9 @@ const translations = {
         exportSuspended: '暂停卡片',
         starredWordsLabel: '星标: {count}',
         scopeStarredLabel: '星标单词',
-        starredCards: '星标卡片'
+        starredCards: '星标卡片',
+        deleteButtonLabel: '删除',
+        confirmDeleteCard: '确定要永久删除这张卡片吗？此操作不可撤销。'
     },
     'en': {
         title: 'Anki Program',
@@ -166,7 +168,9 @@ const translations = {
         exportSuspended: 'Suspended Cards',
         starredWordsLabel: 'Starred: {count}',
         scopeStarredLabel: 'Starred Words',
-        starredCards: 'Starred Cards'
+        starredCards: 'Starred Cards',
+        deleteButtonLabel: 'Delete',
+        confirmDeleteCard: 'Are you sure you want to permanently delete this card? This action cannot be undone.'
     },
     'ja': {
         title: '暗記プログラム',
@@ -250,7 +254,9 @@ const translations = {
         exportSuspended: '一時停止中のカード',
         starredWordsLabel: 'スター付き: {count}',
         scopeStarredLabel: 'スター付き単語',
-        starredCards: 'スター付きカード'
+        starredCards: 'スター付きカード',
+        deleteButtonLabel: '削除',
+        confirmDeleteCard: 'このカードを完全に削除してもよろしいですか？この操作は元に戻せません。'
     }
 };
 document.addEventListener('DOMContentLoaded', async () => {
@@ -623,6 +629,16 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         },
 
+        deleteCard: async (cardQuestion) => {
+            if (allCards.has(cardQuestion)) {
+                allCards.delete(cardQuestion);
+                dbManager.db.run("DELETE FROM cards WHERE question = ?", [cardQuestion]);
+                await dbManager.saveDbToIndexedDB();
+                await cardManager.updateDueCount();
+                updateTextareaStats();
+            }
+        },
+
         updateDueCount: async () => {
             const scopeIsTextarea = document.getElementById('scope-textarea').checked;
 
@@ -956,9 +972,11 @@ document.addEventListener('DOMContentLoaded', async () => {
                         status = `<span class="status-review">${t('statusReview', 'Review')}</span>`;
                     }
 
-                    const actionButton = card.isSuspended
+                    const suspendButton = card.isSuspended
                         ? `<button class="action-btn restore-btn" data-action="restore" data-card-id="${card.question}">${t('restore', 'Restore')}</button>`
                         : `<button class="action-btn suspend-btn" data-action="suspend" data-card-id="${card.question}">${t('suspend', 'Suspend')}</button>`;
+                    
+                    const deleteButton = `<button class="action-btn delete-btn" data-action="delete" data-card-id="${card.question}">${t('deleteButtonLabel', 'Delete')}</button>`;
 
                     const intervalInMinutes = card.interval || 0;
                     let intervalDisplay;
@@ -981,7 +999,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                             <td>${intervalDisplay}</td>
                             <td>${(card.efactor || 2.5).toFixed(2)}</td>
                             <td>${status}</td>
-                            <td>${actionButton}</td>
+                            <td>${suspendButton} ${deleteButton}</td>
                         </tr>`;
                 }).join('') + `</tbody>`;
         }
@@ -1218,6 +1236,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     modalIncorrectListEl.addEventListener('click', async (event) => {
         const target = event.target;
+        const lang = languageSelect.value;
+        const t = (key, fallback) => translations[lang][key] || fallback;
+
         if (target.matches('.tab-btn')) {
             const activeViewBtn = modalIncorrectListEl.querySelector('.tab-btn[data-view].active');
             const activeFilterBtn = modalIncorrectListEl.querySelector('.tab-btn[data-filter].active');
@@ -1236,6 +1257,11 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (action === 'suspend') await cardManager.suspend(cardId);
             else if (action === 'restore') await cardManager.restore(cardId);
             else if (action === 'toggleStar') await cardManager.toggleStar(cardId);
+            else if (action === 'delete') {
+                if (confirm(t('confirmDeleteCard', 'Are you sure you want to permanently delete this card?'))) {
+                    await cardManager.deleteCard(cardId);
+                }
+            }
 
             const activeViewBtn = modalIncorrectListEl.querySelector('.tab-btn[data-view].active');
             const activeFilterBtn = modalIncorrectListEl.querySelector('.tab-btn[data-filter].active');
