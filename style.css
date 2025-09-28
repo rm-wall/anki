@@ -92,6 +92,16 @@ h1 {
     margin-bottom: 15px;
 }
 
+.textarea-stats {
+    display: flex;
+    justify-content: space-between;
+    color: #8e8e93;
+    margin-top: -10px;
+    margin-bottom: 10px;
+    font-size: 0.9rem;
+    padding: 0 5px;
+}
+
 #file-drop-zone {
     border: 2px dashed #ccc;
     border-radius: 8px;
