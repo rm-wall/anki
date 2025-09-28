@@ -1180,33 +1180,45 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // --- Initialization ---
     async function init() {
-        errorModal.style.display = 'none';
-        settingsModal.style.display = 'none';
+        const loadingOverlay = document.getElementById('loading-overlay');
+        try {
+            errorModal.style.display = 'none';
+            settingsModal.style.display = 'none';
 
-        await dbManager.init();
-        if (!dbManager.db) return; // Stop if DB failed to init
+            await dbManager.init();
+            if (!dbManager.db) return; // Stop if DB failed to init
 
-        await loadSettings();
-        setupButtons();
+            await loadSettings();
+            setupButtons();
 
-        const savedWordList = localStorage.getItem(WORD_LIST_STORAGE_KEY);
-        if (savedWordList) wordListInput.value = savedWordList;
+            const savedWordList = localStorage.getItem(WORD_LIST_STORAGE_KEY);
+            if (savedWordList) wordListInput.value = savedWordList;
 
-        const savedLang = localStorage.getItem(LANGUAGE_STORAGE_KEY);
-        const browserLang = navigator.language.split('-')[0];
-        let initialLang = 'en';
+            const savedLang = localStorage.getItem(LANGUAGE_STORAGE_KEY);
+            const browserLang = navigator.language.split('-')[0];
+            let initialLang = 'en';
 
-        if (savedLang && translations[savedLang]) initialLang = savedLang;
-        else if (translations[navigator.language]) initialLang = navigator.language;
-        else if (translations[browserLang]) initialLang = browserLang;
+            if (savedLang && translations[savedLang]) initialLang = savedLang;
+            else if (translations[navigator.language]) initialLang = navigator.language;
+            else if (translations[browserLang]) initialLang = browserLang;
 
-        await setLanguage(initialLang);
-        await cardManager.load();
-        await cardManager.syncFromTextarea();
-        await showSetup();
+            await setLanguage(initialLang);
+            await cardManager.load();
+            await cardManager.syncFromTextarea();
+            await showSetup();
 
-        document.getElementById('scope-all').addEventListener('change', cardManager.updateDueCount);
-        document.getElementById('scope-textarea').addEventListener('change', cardManager.updateDueCount);
+            document.getElementById('scope-all').addEventListener('change', cardManager.updateDueCount);
+            document.getElementById('scope-textarea').addEventListener('change', cardManager.updateDueCount);
+        } catch (error) {
+            console.error("Initialization failed:", error);
+            if (loadingOverlay) {
+                loadingOverlay.textContent = "Error during initialization. Please refresh the page.";
+            }
+        } finally {
+            if (loadingOverlay) {
+                loadingOverlay.style.display = 'none';
+            }
+        }
     }
 
     init();
