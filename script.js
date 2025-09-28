@@ -631,9 +631,26 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         deleteCard: async (cardQuestion) => {
             if (allCards.has(cardQuestion)) {
+                // Delete from in-memory map and DB
                 allCards.delete(cardQuestion);
                 dbManager.db.run("DELETE FROM cards WHERE question = ?", [cardQuestion]);
                 await dbManager.saveDbToIndexedDB();
+
+                // Remove from textarea if present
+                const currentText = wordListInput.value;
+                const lines = currentText.split('\n');
+                const newLines = lines.filter(line => {
+                    const parts = line.split(',').map(part => part.trim());
+                    return parts.length === 0 || parts[0] !== cardQuestion;
+                });
+                const newText = newLines.join('\n');
+
+                if (currentText !== newText) {
+                    wordListInput.value = newText;
+                    localStorage.setItem(WORD_LIST_STORAGE_KEY, newText);
+                }
+
+                // Update UI stats
                 await cardManager.updateDueCount();
                 updateTextareaStats();
             }
