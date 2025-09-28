@@ -798,6 +798,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                         sourceCards = Array.from(allCards.values());
                     }
             
+                    const activeCount = sourceCards.filter(card => !card.isSuspended).length;
+                    const suspendedCount = sourceCards.filter(card => card.isSuspended).length;
+            
                     const filteredCards = sourceCards.filter(card => {
                         return filterType === 'suspended' ? card.isSuspended : !card.isSuspended;
                     });
@@ -877,8 +880,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                                     <button class="tab-btn ${viewType === 'all' ? 'active' : ''}" data-view="all">${t('allTimeCards', 'All Cards')}</button>
                                 </div>
                                 <div class="filter-tabs">
-                                    <button class="tab-btn ${filterType === 'active' ? 'active' : ''}" data-filter="active">${t('activeCards', 'Active Cards')}</button>
-                                    <button class="tab-btn ${filterType === 'suspended' ? 'active' : ''}" data-filter="suspended">${t('suspendedCards', 'Suspended')}</button>
+                                    <button class="tab-btn ${filterType === 'active' ? 'active' : ''}" data-filter="active">${t('activeCards', 'Active Cards')} (${activeCount})</button>
+                                    <button class="tab-btn ${filterType === 'suspended' ? 'active' : ''}" data-filter="suspended">${t('suspendedCards', 'Suspended')} (${suspendedCount})</button>
                                 </div>
                             </div>
                             ${ioButtonsHTML}
