@@ -263,9 +263,12 @@ button:disabled {
     max-width: 500px;
 }
 
+.modal-content h2 {
+    margin-top: 0;
+}
+
 .close-button {
     color: #aaa;
-    float: right;
     font-size: 28px;
     font-weight: bold;
 }
