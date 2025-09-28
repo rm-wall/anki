@@ -1,4 +1,4 @@
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
     // --- I18N Translations ---
     const translations = {
         'zh-CN': {
@@ -17,9 +17,9 @@ document.addEventListener('DOMContentLoaded', () => {
             reviewScopeLegend: '复习范围',
             scopeAllLabel: '所有单词',
             scopeTextareaLabel: '文本框内单词',
-            clearCacheButton: '清空缓存',
-            cacheClearedAlert: '缓存已清空！',
-            confirmClearCache: '确定要清空所有本地数据吗？这将删除所有卡片记录和语言设置。此操作不可撤销。',
+            clearCacheButton: '清空所有本地数据',
+            cacheClearedAlert: '所有本地数据已清空！',
+            confirmClearCache: '确定要清空所有本地数据吗？这将删除所有卡片记录和设置。此操作不可撤销。',
             answerPlaceholder: '输入答案后按回车',
             continueButton: '继续',
             terminateButton: '终止测验',
@@ -83,15 +83,15 @@ document.addEventListener('DOMContentLoaded', () => {
             randomOrderLabel: 'Random Order',
             smartReviewButton: 'Smart Review ({dueCount})',
             cramButton: 'Cram Session',
-            reviewing: 'Reviewing...',
+            reviewing: 'Reviewing...', 
             showAllCardsButton: 'View All Cards',
             reviewOptionsLegend: 'Review Options',
             reviewScopeLegend: 'Review Scope',
             scopeAllLabel: 'All words',
             scopeTextareaLabel: 'Words in textarea',
-            clearCacheButton: 'Clear Cache',
-            cacheClearedAlert: 'Cache cleared!',
-            confirmClearCache: 'Are you sure you want to clear all local data? This will delete all card history and language settings. This action cannot be undone.',
+            clearCacheButton: 'Clear All Local Data',
+            cacheClearedAlert: 'All local data cleared!',
+            confirmClearCache: 'Are you sure you want to clear all local data? This will delete all card history and settings. This action cannot be undone.',
             answerPlaceholder: 'Type answer and press Enter',
             continueButton: 'Continue',
             terminateButton: 'End Test',
@@ -155,14 +155,14 @@ document.addEventListener('DOMContentLoaded', () => {
             randomOrderLabel: 'ランダムな順序',
             smartReviewButton: 'スマートレビュー ({dueCount})',
             cramButton: '集中学習',
-            reviewing: '復習中...',
+            reviewing: '復習中...', 
             showAllCardsButton: '全カード表示',
             reviewOptionsLegend: 'レビュー選択',
             reviewScopeLegend: 'レビュー範囲',
             scopeAllLabel: 'すべての単語',
             scopeTextareaLabel: 'テキストエリアの単語',
-            clearCacheButton: 'キャッシュをクリア',
-            cacheClearedAlert: 'キャッシュがクリアされました！',
+            clearCacheButton: '全ローカルデータをクリア',
+            cacheClearedAlert: '全ローカルデータがクリアされました！',
             confirmClearCache: '本当にすべてのローカルデータをクリアしますか？これには、すべてのカード記録と言語設定が含まれます。この操作は元に戻せません。',
             answerPlaceholder: '答えを入力してEnterキーを押す',
             continueButton: '次へ',
@@ -257,7 +257,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const lapseIntervalUnitInput = document.getElementById('setting-lapse-interval-unit');
     const settingsModalCloseButton = settingsModal.querySelector('.close-button');
 
-    // New button will be created dynamically, but we need a placeholder in the HTML
     let cramButton;
 
     // --- App State ---
@@ -269,7 +268,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let reviewAgainPile = [];
     let isChecking = false;
     let isAnswerCorrect = false;
-    let isCramming = false; // New state for cram mode
+    let isCramming = false;
     let allCards = new Map();
     let srsSettings = {};
     const defaultSrsSettings = {
@@ -278,52 +277,167 @@ document.addEventListener('DOMContentLoaded', () => {
         lapseInterval: { value: 10, unit: 'minutes' },
     };
 
-    // --- Storage Keys ---
-    const CARDS_STORAGE_KEY = 'ankiCardsData';
+    // --- Storage Keys (Legacy) ---
+    const LEGACY_CARDS_STORAGE_KEY = 'ankiCardsData';
+    const LEGACY_SETTINGS_STORAGE_KEY = 'ankiSrsSettings';
     const WORD_LIST_STORAGE_KEY = 'wordListContent';
     const LANGUAGE_STORAGE_KEY = 'preferredLanguage';
-    const SETTINGS_STORAGE_KEY = 'ankiSrsSettings';
+
+    // --- Database Manager ---
+    const dbManager = {
+        db: null,
+        init: async () => {
+            try {
+                const SQL = await initSqlJs({ locateFile: file => `https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.3/${file}` });
+                const dbFile = await dbManager.loadDbFromIndexedDB();
+
+                if (dbFile) {
+                    dbManager.db = new SQL.Database(dbFile);
+                } else {
+                    dbManager.db = new SQL.Database();
+                    dbManager.createSchema();
+                    await dbManager.migrateFromLocalStorage();
+                }
+                await dbManager.saveDbToIndexedDB();
+            } catch (err) {
+                console.error("Database initialization failed:", err);
+                alert("Failed to initialize the database. Please try refreshing the page.");
+            }
+        },
+        loadDbFromIndexedDB: () => {
+            return new Promise((resolve, reject) => {
+                const request = indexedDB.open("AnkiAppDB", 1);
+                request.onerror = e => reject("IndexedDB error: " + e.target.errorCode);
+                request.onsuccess = e => {
+                    const db = e.target.result;
+                    if (!db.objectStoreNames.contains('files')) {
+                        resolve(null); // No store, so no file
+                        return;
+                    }
+                    const tx = db.transaction('files', 'readonly');
+                    const store = tx.objectStore('files');
+                    const getReq = store.get('anki.sqlite');
+                    getReq.onsuccess = () => resolve(getReq.result);
+                    getReq.onerror = () => reject("Failed to get DB file from IndexedDB");
+                };
+                request.onupgradeneeded = e => {
+                    const db = e.target.result;
+                    if (!db.objectStoreNames.contains('files')) {
+                        db.createObjectStore('files');
+                    }
+                };
+            });
+        },
+        saveDbToIndexedDB: async () => {
+            const data = dbManager.db.export();
+            return new Promise((resolve, reject) => {
+                const request = indexedDB.open("AnkiAppDB", 1);
+                request.onerror = e => reject("IndexedDB error: " + e.target.errorCode);
+                request.onsuccess = e => {
+                    const db = e.target.result;
+                    const tx = db.transaction('files', 'readwrite');
+                    const store = tx.objectStore('files');
+                    store.put(data, 'anki.sqlite');
+                    tx.oncomplete = () => resolve();
+                    tx.onerror = () => reject("Failed to save DB file to IndexedDB");
+                };
+            });
+        },
+        createSchema: () => {
+            dbManager.db.run (`
+                CREATE TABLE cards (
+                    id TEXT PRIMARY KEY,
+                    question TEXT,
+                    answers TEXT,
+                    repetitions INTEGER,
+                    efactor REAL,
+                    interval INTEGER,
+                    nextReviewDate TEXT,
+                    isSuspended INTEGER
+                );
+            `);
+            dbManager.db.run (`
+                CREATE TABLE settings (
+                    key TEXT PRIMARY KEY,
+                    value TEXT
+                );
+            `);
+        },
+        migrateFromLocalStorage: async () => {
+            const legacyCards = JSON.parse(localStorage.getItem(LEGACY_CARDS_STORAGE_KEY) || '[]');
+            if (legacyCards.length > 0) {
+                const stmt = dbManager.db.prepare("INSERT INTO cards (id, question, answers, repetitions, efactor, interval, nextReviewDate, isSuspended) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+                legacyCards.forEach(card => {
+                    stmt.run([
+                        card.id,
+                        card.question,
+                        JSON.stringify(card.answers),
+                        card.repetitions,
+                        card.efactor,
+                        card.interval,
+                        card.nextReviewDate,
+                        card.isSuspended ? 1 : 0
+                    ]);
+                });
+                stmt.free();
+                localStorage.removeItem(LEGACY_CARDS_STORAGE_KEY);
+            }
+
+            const legacySettings = JSON.parse(localStorage.getItem(LEGACY_SETTINGS_STORAGE_KEY) || '{}');
+            if (Object.keys(legacySettings).length > 0) {
+                const stmt = dbManager.db.prepare("INSERT INTO settings (key, value) VALUES (?, ?)");
+                stmt.run(['srsSettings', JSON.stringify(legacySettings)]);
+                stmt.free();
+                localStorage.removeItem(LEGACY_SETTINGS_STORAGE_KEY);
+            }
+        },
+        clearAllData: async () => {
+            return new Promise((resolve, reject) => {
+                const request = indexedDB.deleteDatabase("AnkiAppDB");
+                request.onsuccess = () => {
+                    localStorage.removeItem(WORD_LIST_STORAGE_KEY);
+                    localStorage.removeItem(LANGUAGE_STORAGE_KEY);
+                    resolve();
+                };
+                request.onerror = () => reject("Error deleting database.");
+                request.onblocked = () => reject("Database deletion blocked.");
+            });
+        }
+    };
 
     // --- Spaced Repetition Logic ---
     const cardManager = {
-        // All dates are now stored as full ISO strings for precision
         getNowISO: () => new Date().toISOString(),
 
-        load: () => {
-            const storedCards = JSON.parse(localStorage.getItem(CARDS_STORAGE_KEY) || '[]');
-            allCards = new Map(storedCards.map(card => [card.id, card]));
-
-            // --- One-time Data Migration ---
-            let needsSave = false;
-            allCards.forEach(card => {
-                // If date is in old YYYY-MM-DD format, convert it.
-                if (card.nextReviewDate && !card.nextReviewDate.includes('T')) {
-                    card.nextReviewDate = cardManager.getNowISO();
-                    // Also reset interval to be in minutes, assuming old intervals were in days.
-                    // This makes it compatible with the new system. A value of 0 is safe.
-                    card.interval = 0;
-                    needsSave = true;
-                }
-            });
-
-            if (needsSave) {
-                cardManager.save();
+        load: async () => {
+            const res = dbManager.db.exec("SELECT * FROM cards");
+            allCards.clear();
+            if (res.length > 0) {
+                const values = res[0].values;
+                values.forEach(row => {
+                    const card = {
+                        id: row[0],
+                        question: row[1],
+                        answers: JSON.parse(row[2]),
+                        repetitions: row[3],
+                        efactor: row[4],
+                        interval: row[5],
+                        nextReviewDate: row[6],
+                        isSuspended: row[7] === 1,
+                    };
+                    allCards.set(card.id, card);
+                });
             }
-            // --- End Migration ---
-
-            cardManager.updateDueCount();
+            await cardManager.updateDueCount();
         },
 
-        save: () => {
-            localStorage.setItem(CARDS_STORAGE_KEY, JSON.stringify(Array.from(allCards.values())));
-        },
-
-        syncFromTextarea: () => {
+        syncFromTextarea: async () => {
             const text = wordListInput.value.trim();
             const lines = text.split('\n');
             const seenIds = new Set();
 
             if (text) {
+                const stmt = dbManager.db.prepare("INSERT OR IGNORE INTO cards (id, question, answers, repetitions, efactor, interval, nextReviewDate, isSuspended) VALUES (?, ?, ?, 0, 2.5, 0, ?, 0)");
                 lines.forEach(line => {
                     const parts = line.split(',').map(part => part.trim()).filter(part => part);
                     if (parts.length < 2) return;
@@ -332,45 +446,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     seenIds.add(id);
 
                     if (!allCards.has(id)) {
-                        allCards.set(id, {
-                            id: id,
-                            question: parts[0],
-                            answers: parts,
-                            repetitions: 0,
-                            efactor: 2.5,
-                            interval: 0, // Interval is now a duration in minutes
-                            nextReviewDate: cardManager.getNowISO(),
-                            isSuspended: false,
-                        });
-                    }
-                });
-            }
-
-            const idsToDelete = [];
-            allCards.forEach((card, id) => {
-                if (!seenIds.has(id) && card.repetitions === 0) {
-                    idsToDelete.push(id);
-                }
-            });
-            idsToDelete.forEach(id => allCards.delete(id));
-
-            cardManager.save();
-            cardManager.updateDueCount();
-        },
-
-        importFromText: (text) => {
-            const lines = text.split('\n');
-            let newCardsAdded = 0;
-
-            if (text) {
-                lines.forEach(line => {
-                    const parts = line.split(',').map(part => part.trim()).filter(part => part);
-                    if (parts.length < 2) return;
-
-                    const id = parts.join(',');
-
-                    if (!allCards.has(id)) {
-                        allCards.set(id, {
+                        const newCard = {
                             id: id,
                             question: parts[0],
                             answers: parts,
@@ -379,15 +455,67 @@ document.addEventListener('DOMContentLoaded', () => {
                             interval: 0,
                             nextReviewDate: cardManager.getNowISO(),
                             isSuspended: false,
-                        });
+                        };
+                        allCards.set(id, newCard);
+                        stmt.run([id, parts[0], JSON.stringify(parts), newCard.nextReviewDate]);
+                    }
+                });
+                stmt.free();
+            }
+
+            const idsToDelete = [];
+            allCards.forEach((card, id) => {
+                if (!seenIds.has(id) && card.repetitions === 0) {
+                    idsToDelete.push(id);
+                }
+            });
+
+            if (idsToDelete.length > 0) {
+                const stmt = dbManager.db.prepare("DELETE FROM cards WHERE id = ?");
+                idsToDelete.forEach(id => {
+                    allCards.delete(id);
+                    stmt.run([id]);
+                });
+                stmt.free();
+            }
+
+            await dbManager.saveDbToIndexedDB();
+            await cardManager.updateDueCount();
+        },
+
+        importFromText: async (text) => {
+            const lines = text.split('\n');
+            let newCardsAdded = 0;
+
+            if (text) {
+                const stmt = dbManager.db.prepare("INSERT OR IGNORE INTO cards (id, question, answers, repetitions, efactor, interval, nextReviewDate, isSuspended) VALUES (?, ?, ?, 0, 2.5, 0, ?, 0)");
+                lines.forEach(line => {
+                    const parts = line.split(',').map(part => part.trim()).filter(part => part);
+                    if (parts.length < 2) return;
+
+                    const id = parts.join(',');
+                    if (!allCards.has(id)) {
+                        const newCard = {
+                            id: id,
+                            question: parts[0],
+                            answers: parts,
+                            repetitions: 0,
+                            efactor: 2.5,
+                            interval: 0,
+                            nextReviewDate: cardManager.getNowISO(),
+                            isSuspended: false,
+                        };
+                        allCards.set(id, newCard);
+                        stmt.run([id, parts[0], JSON.stringify(parts), newCard.nextReviewDate]);
                         newCardsAdded++;
                     }
                 });
+                stmt.free();
             }
 
             if (newCardsAdded > 0) {
-                cardManager.save();
-                cardManager.updateDueCount();
+                await dbManager.saveDbToIndexedDB();
+                await cardManager.updateDueCount();
             }
             return newCardsAdded;
         },
@@ -403,7 +531,7 @@ document.addEventListener('DOMContentLoaded', () => {
             return Array.from(allCards.values()).filter(card => !card.isSuspended);
         },
 
-        update: (cardId, isCorrect) => {
+        update: async (cardId, isCorrect) => {
             const card = allCards.get(cardId);
             if (!card) return;
 
@@ -436,29 +564,35 @@ document.addEventListener('DOMContentLoaded', () => {
             nextReview.setMinutes(nextReview.getMinutes() + card.interval);
             card.nextReviewDate = nextReview.toISOString();
 
-            cardManager.save();
+            dbManager.db.run (
+                "UPDATE cards SET repetitions = ?, efactor = ?, interval = ?, nextReviewDate = ? WHERE id = ?",
+                [card.repetitions, card.efactor, card.interval, card.nextReviewDate, card.id]
+            );
+            await dbManager.saveDbToIndexedDB();
         },
 
-        suspend: (cardId) => {
+        suspend: async (cardId) => {
             const card = allCards.get(cardId);
             if (card) {
                 card.isSuspended = true;
-                cardManager.save();
-                cardManager.updateDueCount();
+                dbManager.db.run("UPDATE cards SET isSuspended = 1 WHERE id = ?", [cardId]);
+                await dbManager.saveDbToIndexedDB();
+                await cardManager.updateDueCount();
             }
         },
 
-        restore: (cardId) => {
+        restore: async (cardId) => {
             const card = allCards.get(cardId);
             if (card) {
                 card.isSuspended = false;
                 card.nextReviewDate = cardManager.getNowISO();
-                cardManager.save();
-                cardManager.updateDueCount();
+                dbManager.db.run("UPDATE cards SET isSuspended = 0, nextReviewDate = ? WHERE id = ?", [card.nextReviewDate, cardId]);
+                await dbManager.saveDbToIndexedDB();
+                await cardManager.updateDueCount();
             }
         },
 
-        updateDueCount: () => {
+        updateDueCount: async () => {
             const scopeIsTextarea = document.getElementById('scope-textarea').checked;
 
             let dueCards;
@@ -487,7 +621,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     // --- Game Flow Functions ---
-    function startSession(cards) {
+    async function startSession(cards) {
         if (cards.length === 0) {
             const alertKey = isCramming ? 'noCardsToCram' : 'noDueCards';
             alert(translations[languageSelect.value][alertKey]);
@@ -514,9 +648,9 @@ document.addEventListener('DOMContentLoaded', () => {
         displayNextCard();
     }
 
-    function startSmartReview() {
+    async function startSmartReview() {
         isCramming = false;
-        cardManager.syncFromTextarea();
+        await cardManager.syncFromTextarea();
 
         let dueCards;
         if (document.getElementById('scope-textarea').checked) {
@@ -527,12 +661,12 @@ document.addEventListener('DOMContentLoaded', () => {
             dueCards = cardManager.getDueCards();
         }
 
-        startSession(dueCards);
+        await startSession(dueCards);
     }
 
-    function startCramSession() {
+    async function startCramSession() {
         isCramming = true;
-        cardManager.syncFromTextarea();
+        await cardManager.syncFromTextarea();
 
         let activeCards;
         if (document.getElementById('scope-textarea').checked) {
@@ -543,7 +677,7 @@ document.addEventListener('DOMContentLoaded', () => {
             activeCards = cardManager.getAllActiveCards();
         }
 
-        startSession(activeCards);
+        await startSession(activeCards);
     }
 
     function displayNextCard() {
@@ -552,20 +686,19 @@ document.addEventListener('DOMContentLoaded', () => {
             answerInput.value = '';
             answerInput.focus();
         } else {
-            // End of a pass. Check if there are incorrect cards to review again.
             if (!isCramming && reviewAgainPile.length > 0) {
                 sessionCards = [...reviewAgainPile];
                 reviewAgainPile = [];
                 currentCardIndex = 0;
                 if (randomOrderCheckbox.checked) shuffle(sessionCards);
-                displayNextCard(); // Start the next pass
+                displayNextCard();
             } else {
-                showSummary(); // Session is truly over
+                showSummary();
             }
         }
     }
 
-    function showSummary() {
+    async function showSummary() {
         correctCountEl.textContent = sessionCorrectCount;
         incorrectCountEl.textContent = sessionIncorrectCount;
         cardEl.style.display = 'none';
@@ -578,11 +711,11 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
             incorrectWordsContainer.style.display = 'none';
         }
-        cardManager.updateDueCount();
+        await cardManager.updateDueCount();
     }
 
     // --- Answer Checking ---
-    function checkAnswer() {
+    async function checkAnswer() {
         if (isChecking) return;
         const userAnswer = answerInput.value.trim();
         if (userAnswer === '') return;
@@ -596,13 +729,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (processedAnswers.includes(processedUserAnswer)) {
             isAnswerCorrect = true;
-            handleCorrectAnswer(currentCard);
+            await handleCorrectAnswer(currentCard);
             if (autoAdvanceCheckbox.checked) setTimeout(proceedToNextCard, 1500);
             else continueButton.style.display = 'inline-block';
             answerInput.blur();
         } else {
             isAnswerCorrect = false;
-            handleIncorrectAnswer(currentCard);
+            await handleIncorrectAnswer(currentCard);
             continueButton.style.display = 'inline-block';
             answerInput.disabled = false;
             isChecking = false;
@@ -622,17 +755,17 @@ document.addEventListener('DOMContentLoaded', () => {
         displayNextCard();
     }
 
-    function handleCorrectAnswer(card) {
+    async function handleCorrectAnswer(card) {
         const feedbackText = translations[languageSelect.value].correctFeedback;
         feedbackEl.textContent = feedbackText.replace('{answers}', card.answers.join(' / '));
         feedbackEl.className = 'correct';
         sessionCorrectCount++;
-        if (!isCramming) { // Only update SRS data in smart review mode
-            cardManager.update(card.id, true);
+        if (!isCramming) {
+            await cardManager.update(card.id, true);
         }
     }
 
-    function handleIncorrectAnswer(card) {
+    async function handleIncorrectAnswer(card) {
         const feedbackText = translations[languageSelect.value].incorrectFeedback;
         feedbackEl.textContent = feedbackText.replace('{answers}', card.answers.join(' / '));
         feedbackEl.className = 'incorrect';
@@ -643,17 +776,17 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!isCramming && !reviewAgainPile.some(c => c.id === card.id)) {
             reviewAgainPile.push(card);
         }
-        if (!isCramming) { // Only update SRS data in smart review mode
-            cardManager.update(card.id, false);
+        if (!isCramming) {
+            await cardManager.update(card.id, false);
         }
     }
 
     // --- UI and Utility Functions ---
-    function showSetup() {
+    async function showSetup() {
         summaryEl.style.display = 'none';
         cardEl.style.display = 'none';
         setupEl.style.display = 'block';
-        cardManager.updateDueCount();
+        await cardManager.updateDueCount();
     }
 
     function formatReviewDate(isoString, lang) {
@@ -687,7 +820,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const text = wordListInput.value.trim();
             const currentIds = new Set(text.split('\n').map(line => line.split(',').map(part => part.trim()).filter(part => part).join(',')));
             sourceCards = Array.from(allCards.values()).filter(card => currentIds.has(card.id));
-        } else { // 'all'
+        } else {
             sourceCards = Array.from(allCards.values());
         }
 
@@ -792,12 +925,12 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    function handleFile(file) {
+    async function handleFile(file) {
         const reader = new FileReader();
-        reader.onload = (e) => {
+        reader.onload = async (e) => {
             wordListInput.value = e.target.result;
             localStorage.setItem(WORD_LIST_STORAGE_KEY, e.target.result);
-            cardManager.syncFromTextarea();
+            await cardManager.syncFromTextarea();
         };
         reader.readAsText(file);
     }
@@ -821,20 +954,19 @@ document.addEventListener('DOMContentLoaded', () => {
         URL.revokeObjectURL(url);
     }
 
-    function importCards(event) {
+    async function importCards(event) {
         const file = event.target.files[0];
         if (!file) return;
 
         const reader = new FileReader();
-        reader.onload = (e) => {
+        reader.onload = async (e) => {
             const content = e.target.result;
             if (confirm(translations[languageSelect.value].confirmImport)) {
                 try {
-                    const newCardsCount = cardManager.importFromText(content);
+                    const newCardsCount = await cardManager.importFromText(content);
                     const successMsgTemplate = translations[languageSelect.value].importSuccess;
                     alert(successMsgTemplate.replace('{count}', newCardsCount));
 
-                    // Re-render the modal, forcing it to show the 'all' view to reflect the import.
                     const activeFilterBtn = modalIncorrectListEl.querySelector('.tab-btn[data-filter].active');
                     const filterType = activeFilterBtn ? activeFilterBtn.dataset.filter : 'active';
                     renderAllCardsModal('all', filterType);
@@ -845,13 +977,11 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         };
         reader.readAsText(file);
-        // Reset input value to allow importing the same file again
         event.target.value = '';
     }
 
-
     // --- Language Functions ---
-    function setLanguage(lang) {
+    async function setLanguage(lang) {
         const translation = translations[lang];
         if (!translation) return;
 
@@ -866,8 +996,8 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         localStorage.setItem(LANGUAGE_STORAGE_KEY, lang);
         languageSelect.value = lang;
-        cardManager.updateDueCount();
-        updateLastUpdatedTime(lang); // Update the footer language
+        await cardManager.updateDueCount();
+        updateLastUpdatedTime(lang);
     }
 
     // --- Update Last Updated Time ---
@@ -875,7 +1005,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const lastUpdatedElement = document.getElementById('last-updated');
         if (lastUpdatedElement) {
             const lastModified = new Date(document.lastModified);
-            // Fallback to 'en' if the language code is not available in translations
             const currentLang = translations[lang] ? lang : 'en';
             const locale = currentLang.replace('_', '-');
             const options = { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' };
@@ -899,9 +1028,12 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // --- Settings Functions ---
-    function loadSettings() {
-        const savedSettings = JSON.parse(localStorage.getItem(SETTINGS_STORAGE_KEY) || '{}');
-        // Deep merge to handle partial saved settings
+    async function loadSettings() {
+        const res = dbManager.db.exec("SELECT value FROM settings WHERE key = 'srsSettings'");
+        let savedSettings = {};
+        if (res.length > 0 && res[0].values.length > 0) {
+            savedSettings = JSON.parse(res[0].values[0][0]);
+        }
         srsSettings = {
             initialInterval: { ...defaultSrsSettings.initialInterval, ...(savedSettings.initialInterval || {}) },
             secondInterval: { ...defaultSrsSettings.secondInterval, ...(savedSettings.secondInterval || {}) },
@@ -909,14 +1041,16 @@ document.addEventListener('DOMContentLoaded', () => {
         };
     }
 
-    function saveSettings() {
+    async function saveSettings() {
         srsSettings.initialInterval.value = parseInt(initialIntervalValueInput.value, 10) || defaultSrsSettings.initialInterval.value;
         srsSettings.initialInterval.unit = initialIntervalUnitInput.value;
         srsSettings.secondInterval.value = parseInt(secondIntervalValueInput.value, 10) || defaultSrsSettings.secondInterval.value;
         srsSettings.secondInterval.unit = secondIntervalUnitInput.value;
         srsSettings.lapseInterval.value = parseInt(lapseIntervalValueInput.value, 10) || defaultSrsSettings.lapseInterval.value;
         srsSettings.lapseInterval.unit = lapseIntervalUnitInput.value;
-        localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(srsSettings));
+
+        dbManager.db.run("INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)", ['srsSettings', JSON.stringify(srsSettings)]);
+        await dbManager.saveDbToIndexedDB();
     }
 
     function populateSettingsModal() {
@@ -946,12 +1080,12 @@ document.addEventListener('DOMContentLoaded', () => {
         if (event.target == errorModal) errorModal.style.display = 'none';
         if (event.target == settingsModal) settingsModal.style.display = 'none';
     });
-    wordListInput.addEventListener('input', () => {
+    wordListInput.addEventListener('input', async () => {
         localStorage.setItem(WORD_LIST_STORAGE_KEY, wordListInput.value);
-        cardManager.syncFromTextarea();
+        await cardManager.syncFromTextarea();
     });
 
-    modalIncorrectListEl.addEventListener('click', (event) => {
+    modalIncorrectListEl.addEventListener('click', async (event) => {
         const target = event.target;
         if (target.matches('.tab-btn')) {
             const activeViewBtn = modalIncorrectListEl.querySelector('.tab-btn[data-view].active');
@@ -960,20 +1094,16 @@ document.addEventListener('DOMContentLoaded', () => {
             let viewType = activeViewBtn ? activeViewBtn.dataset.view : 'current';
             let filterType = activeFilterBtn ? activeFilterBtn.dataset.filter : 'active';
 
-            if (target.dataset.view) {
-                viewType = target.dataset.view;
-            }
-            if (target.dataset.filter) {
-                filterType = target.dataset.filter;
-            }
+            if (target.dataset.view) viewType = target.dataset.view;
+            if (target.dataset.filter) filterType = target.dataset.filter;
 
             renderAllCardsModal(viewType, filterType);
 
         } else if (target.matches('.action-btn')) {
             const action = target.dataset.action;
             const cardId = target.dataset.cardId;
-            if (action === 'suspend') cardManager.suspend(cardId);
-            else if (action === 'restore') cardManager.restore(cardId);
+            if (action === 'suspend') await cardManager.suspend(cardId);
+            else if (action === 'restore') await cardManager.restore(cardId);
 
             const activeViewBtn = modalIncorrectListEl.querySelector('.tab-btn[data-view].active');
             const activeFilterBtn = modalIncorrectListEl.querySelector('.tab-btn[data-filter].active');
@@ -1002,68 +1132,63 @@ document.addEventListener('DOMContentLoaded', () => {
         if (event.target.files.length > 0) handleFile(event.target.files[0]);
     });
 
-    // Delegated I/O listeners on the modal
     errorModal.addEventListener('click', (event) => {
-        if (event.target.matches('#export-cards-button')) {
-            exportCards();
-        }
+        if (event.target.matches('#export-cards-button')) exportCards();
         if (event.target.matches('#import-cards-button')) {
-            // Find the input within the modal and click it
             const importInput = errorModal.querySelector('#import-cards-input');
-            if (importInput) {
-                importInput.click();
-            }
+            if (importInput) importInput.click();
         }
     });
     errorModal.addEventListener('change', (event) => {
-        if (event.target.matches('#import-cards-input')) {
-            importCards(event);
-        }
+        if (event.target.matches('#import-cards-input')) importCards(event);
     });
 
-
-    // Settings Modal Listeners
     settingsButton.addEventListener('click', () => {
         populateSettingsModal();
         settingsModal.style.display = 'flex';
     });
     settingsModalCloseButton.addEventListener('click', () => settingsModal.style.display = 'none');
-    saveSettingsButton.addEventListener('click', () => {
-        saveSettings();
+    saveSettingsButton.addEventListener('click', async () => {
+        await saveSettings();
         settingsModal.style.display = 'none';
     });
-    resetSettingsButton.addEventListener('click', () => {
+    resetSettingsButton.addEventListener('click', async () => {
         srsSettings = { ...defaultSrsSettings };
         populateSettingsModal();
-        saveSettings(); // Also save after resetting
+        await saveSettings();
     });
-    clearCacheButton.addEventListener('click', () => {
+    clearCacheButton.addEventListener('click', async () => {
         if (confirm(translations[languageSelect.value].confirmClearCache)) {
-            localStorage.clear();
-            alert(translations[languageSelect.value].cacheClearedAlert);
-            location.reload();
-        }
-    });
-
-
-    // --- Global Keydown Listener ---
-    document.addEventListener('keydown', (event) => {
-        if (errorModal.style.display === 'block' || settingsModal.style.display === 'flex') return;
-
-        if (event.key === 'Enter' && continueButton.style.display !== 'none') {
-            event.preventDefault();
-            if (isAnswerCorrect) {
-                proceedToNextCard();
+            try {
+                await dbManager.clearAllData();
+                alert(translations[languageSelect.value].cacheClearedAlert);
+                location.reload();
+            } catch (error) {
+                console.error("Failed to clear data:", error);
+                alert("Error clearing data. See console for details.");
             }
         }
     });
 
+    document.addEventListener('keydown', (event) => {
+        if (errorModal.style.display === 'block' || settingsModal.style.display === 'flex') return;
+        if (event.key === 'Enter' && continueButton.style.display !== 'none') {
+            event.preventDefault();
+            if (isAnswerCorrect) proceedToNextCard();
+        }
+    });
+
     // --- Initialization ---
-    function init() {
+    async function init() {
         errorModal.style.display = 'none';
         settingsModal.style.display = 'none';
-        loadSettings();
+
+        await dbManager.init();
+        if (!dbManager.db) return; // Stop if DB failed to init
+
+        await loadSettings();
         setupButtons();
+
         const savedWordList = localStorage.getItem(WORD_LIST_STORAGE_KEY);
         if (savedWordList) wordListInput.value = savedWordList;
 
@@ -1075,12 +1200,11 @@ document.addEventListener('DOMContentLoaded', () => {
         else if (translations[navigator.language]) initialLang = navigator.language;
         else if (translations[browserLang]) initialLang = browserLang;
 
-        setLanguage(initialLang);
-        cardManager.load();
-        cardManager.syncFromTextarea();
-        showSetup();
+        await setLanguage(initialLang);
+        await cardManager.load();
+        await cardManager.syncFromTextarea();
+        await showSetup();
 
-        // Add event listeners for scope change
         document.getElementById('scope-all').addEventListener('change', cardManager.updateDueCount);
         document.getElementById('scope-textarea').addEventListener('change', cardManager.updateDueCount);
     }
