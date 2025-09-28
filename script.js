@@ -73,174 +73,172 @@ const translations = {
         importFailed: '导入失败。请检查文件是否为纯文本格式。',
         dbInitializing: '正在初始化数据库...', 
         totalWordsLabel: '总共: {count}',
-                newWordsLabel: '新: {count}',
-                suspendedWordsLabel: '暂停: {count}',
-                exportPrompt: '要导出哪种类型的卡片？',
-                exportActive: '活动卡片',
-                exportSuspended: '暂停卡片'
-            },
-            'en': {
-                title: 'Anki Program',
-                languageLabel: 'Language:',
-                mainHeading: 'Anki Program',
-                listHeading: 'Enter Word List',
-                instructions: 'One entry per line, format: <b>Question, Answer 1, Answer 2...</b>, e.g.:',
-                dropZoneLabel: 'Drag and drop a file here, or click to select a file',
-                randomOrderLabel: 'Random Order',
-                smartReviewButton: 'Smart Review ({dueCount})',
-                cramButton: 'Cram Session',
-                reviewing: 'Reviewing...',
-                showAllCardsButton: 'View All Cards',
-                reviewOptionsLegend: 'Review Options',
-                reviewScopeLegend: 'Review Scope',
-                scopeAllLabel: 'All words',
-                scopeTextareaLabel: 'Words in textarea',
-                clearCacheButton: 'Clear All Local Data',
-                cacheClearedAlert: 'All local data cleared!',
-                confirmClearCache: 'Are you sure you want to clear all local data? This will delete all card history and settings. This action cannot be undone.',
-                answerPlaceholder: 'Type answer and press Enter',
-                continueButton: 'Continue',
-                terminateButton: 'End Test',
-                summaryHeading: 'Session Finished!',
-                correctLabel: 'Correct',
-                incorrectLabel: 'Incorrect',
-                incorrectWordsHeading: 'Incorrect words this session',
-                restartButton: 'Return to Main Menu',
-                allCardsModalHeading: 'All Cards Status',
-                correctFeedback: 'Correct! The answer is: {answers}',
-                incorrectFeedback: 'Incorrect! The answer is: {answers}',
-                emptyListAlert: 'The word list is empty or formatted incorrectly.',
-                noDueCards: 'No cards due for review today!',
-                noCardsToCram: 'There are no cards available to cram.',
-                autoAdvanceLabel: 'Auto-advance to next question',
-                cardQuestion: 'Question',
-                cardAnswers: 'Answers',
-                cardNextReview: 'Next Review',
-                cardInterval: 'Interval(d)',
-                cardEfactor: 'E-Factor',
-                cardStatus: 'Status',
-                cardActions: 'Actions',
-                statusNew: 'New',
-                statusLearning: 'Learning',
-                statusReview: 'Review',
-                statusDue: 'Due',
-                statusSuspended: 'Suspended',
-                today: 'Today',
-                noCardsFound: 'No cards found.',
-                suspend: 'Suspend',
-                restore: 'Restore',
-                activeCards: 'Active Cards',
-                suspendedCards: 'Suspended',
-                currentListCards: 'Current List',
-                allTimeCards: 'All Cards',
-                lastUpdatedLabel: 'Last updated:',
-                settingsButton: 'Settings',
-                settingsModalHeading: 'Algorithm Parameters',
-                initialIntervalLabel: 'Interval after 1st correct',
-                secondIntervalLabel: 'Interval after 2nd correct',
-                lapseIntervalLabel: 'Interval after incorrect',
-                saveButton: 'Save',
-                resetButton: 'Reset to Defaults',
-                minutes: 'Minutes',
-                hours: 'Hours',
-                days: 'Days',
-                dangerZoneHeading: 'Danger Zone',
-                exportButton: 'Export List',
-                importButton: 'Import List',
-                confirmImport: 'Are you sure you want to import a new word list? This will only add new cards from the file that do not already exist and will not affect the list in the textarea.',
-                importSuccess: 'Word list imported successfully! {count} new cards have been added.',
-                importFailed: 'Import failed. Please ensure the file is a plain text file.',
-                dbInitializing: 'Initializing Database...',
-                totalWordsLabel: 'Total: {count}',
-                newWordsLabel: 'New: {count}',
-                suspendedWordsLabel: 'Suspended: {count}',
-                exportPrompt: 'Which type of cards do you want to export?',
-                exportActive: 'Active Cards',
-                exportSuspended: 'Suspended Cards'
-            },
-            'ja': {
-                title: '暗記プログラム',
-                languageLabel: '言語:',
-                mainHeading: '暗記プログラム',
-                listHeading: '単語リストを入力',
-                instructions: '各行に1つのエントリ、形式：<b>問題, 答え1, 答え2...</b>、例：',
-                dropZoneLabel: 'ここにファイルをドラッグ＆ドロップするか、クリックしてファイルを選択します',
-                randomOrderLabel: 'ランダムな順序',
-                smartReviewButton: 'スマートレビュー ({dueCount})',
-                cramButton: '集中学習',
-                reviewing: '復習中...',
-                showAllCardsButton: '全カード表示',
-                reviewOptionsLegend: 'レビュー選択',
-                reviewScopeLegend: 'レビュー範囲',
-                scopeAllLabel: 'すべての単語',
-                scopeTextareaLabel: 'テキストエリアの単語',
-                clearCacheButton: '全ローカルデータをクリア',
-                cacheClearedAlert: '全ローカルデータがクリアされました！',
-                confirmClearCache: '本当にすべてのローカルデータをクリアしますか？これには、すべてのカード記録と言語設定が含まれます。この操作は元に戻せません。',
-                answerPlaceholder: '答えを入力してEnterキーを押す',
-                continueButton: '次へ',
-                terminateButton: 'テスト終了',
-                summaryHeading: 'セッション完了！',
-                correctLabel: '正解',
-                incorrectLabel: '不正解',
-                incorrectWordsHeading: 'このセッションで間違った単語',
-                restartButton: 'メインメニューに戻る',
-                allCardsModalHeading: '全カードの状態',
-                correctFeedback: '正解！答えは: {answers}',
-                incorrectFeedback: '不正解！答えは: {answers}',
-                emptyListAlert: '単語リストが空か、形式が正しくありません。',
-                noDueCards: '今日レビューするカードはありません！',
-                noCardsToCram: '集中学習できるカードがありません。',
-                autoAdvanceLabel: '正解の場合、自動的に次に進む',
-                cardQuestion: '問題',
-                cardAnswers: '答え',
-                cardNextReview: '次回レビュー',
-                cardInterval: '間隔(日)',
-                cardEfactor: '難易度係数',
-                cardStatus: '状態',
-                cardActions: '操作',
-                statusNew: '新規',
-                statusLearning: '学習中',
-                statusReview: '復習',
-                statusDue: '期限切れ',
-                statusSuspended: '一時停止中',
-                today: '今日',
-                noCardsFound: 'カードが見つかりません。',
-                suspend: '一時停止',
-                restore: '再開',
-                activeCards: 'アクティブなカード',
-                suspendedCards: '一時停止中',
-                currentListCards: '現在のリスト',
-                allTimeCards: '全カード',
-                lastUpdatedLabel: '最終更新日：',
-                settingsButton: '設定',
-                settingsModalHeading: 'アルゴリズムパラメータ設定',
-                initialIntervalLabel: '初回正解後の間隔',
-                secondIntervalLabel: '2回目正解後の間隔',
-                lapseIntervalLabel: '不正解後の間隔',
-                saveButton: '保存',
-                resetButton: 'デフォルトに戻す',
-                minutes: '分',
-                hours: '時間',
-                days: '日',
-                dangerZoneHeading: '危険区域',
-                exportButton: 'リストをエクスポート',
-                importButton: 'リストをインポート',
-                confirmImport: '新しい単語リストをインポートしてもよろしいですか？これにより、ファイルに存在する新しいカードのみが追加され、テキストエリアのリストには影響しません。',
-                importSuccess: '単語リストが正常にインポートされました！{count}枚の新しいカードが追加されました。',
-                importFailed: 'インポートに失敗しました。ファイルがプレーンテキスト形式であることを確認してください。',
-                dbInitializing: 'データベースを初期化しています...',
-                totalWordsLabel: '合計: {count}',
-                newWordsLabel: '新規: {count}',
-                suspendedWordsLabel: '一時停止: {count}',
-                exportPrompt: 'どのタイプのカードをエクスポートしますか？',
-                exportActive: 'アクティブなカード',
-                exportSuspended: '一時停止中のカード'
-            }
-        };
+        newWordsLabel: '新: {count}',
+        suspendedWordsLabel: '暂停: {count}',
+        exportPrompt: '要导出哪种类型的卡片？',
+        exportActive: '活动卡片',
+        exportSuspended: '暂停卡片'
+    },
+    'en': {
+        title: 'Anki Program',
+        languageLabel: 'Language:',
+        mainHeading: 'Anki Program',
+        listHeading: 'Enter Word List',
+        instructions: 'One entry per line, format: <b>Question, Answer 1, Answer 2...</b>, e.g.:',
+        dropZoneLabel: 'Drag and drop a file here, or click to select a file',
+        randomOrderLabel: 'Random Order',
+        smartReviewButton: 'Smart Review ({dueCount})',
+        cramButton: 'Cram Session',
+        reviewing: 'Reviewing...', 
+        showAllCardsButton: 'View All Cards',
+        reviewOptionsLegend: 'Review Options',
+        reviewScopeLegend: 'Review Scope',
+        scopeAllLabel: 'All words',
+        scopeTextareaLabel: 'Words in textarea',
+        clearCacheButton: 'Clear All Local Data',
+        cacheClearedAlert: 'All local data cleared!',
+        confirmClearCache: 'Are you sure you want to clear all local data? This will delete all card history and settings. This action cannot be undone.',
+        answerPlaceholder: 'Type answer and press Enter',
+        continueButton: 'Continue',
+        terminateButton: 'End Test',
+        summaryHeading: 'Session Finished!',
+        correctLabel: 'Correct',
+        incorrectLabel: 'Incorrect',
+        incorrectWordsHeading: 'Incorrect words this session',
+        restartButton: 'Return to Main Menu',
+        allCardsModalHeading: 'All Cards Status',
+        correctFeedback: 'Correct! The answer is: {answers}',
+        incorrectFeedback: 'Incorrect! The answer is: {answers}',
+        emptyListAlert: 'The word list is empty or formatted incorrectly.',
+        noDueCards: 'No cards due for review today!',
+        noCardsToCram: 'There are no cards available to cram.',
+        autoAdvanceLabel: 'Auto-advance to next question',
+        cardQuestion: 'Question',
+        cardAnswers: 'Answers',
+        cardNextReview: 'Next Review',
+        cardInterval: 'Interval(d)',
+        cardEfactor: 'E-Factor',
+        cardStatus: 'Status',
+        cardActions: 'Actions',
+        statusNew: 'New',
+        statusLearning: 'Learning',
+        statusReview: 'Review',
+        statusDue: 'Due',
+        statusSuspended: 'Suspended',
+        today: 'Today',
+        noCardsFound: 'No cards found.',
+        suspend: 'Suspend',
+        restore: 'Restore',
+        activeCards: 'Active Cards',
+        suspendedCards: 'Suspended',
+        currentListCards: 'Current List',
+        allTimeCards: 'All Cards',
+        lastUpdatedLabel: 'Last updated:',
+        settingsButton: 'Settings',
+        settingsModalHeading: 'Algorithm Parameters',
+        initialIntervalLabel: 'Interval after 1st correct',
+        secondIntervalLabel: 'Interval after 2nd correct',
+        lapseIntervalLabel: 'Interval after incorrect',
+        saveButton: 'Save',
+        resetButton: 'Reset to Defaults',
+        minutes: 'Minutes',
+        hours: 'Hours',
+        days: 'Days',
+        dangerZoneHeading: 'Danger Zone',
+        exportButton: 'Export List',
+        importButton: 'Import List',
+        confirmImport: 'Are you sure you want to import a new word list? This will only add new cards from the file that do not already exist and will not affect the list in the textarea.',
+        importSuccess: 'Word list imported successfully! {count} new cards have been added.',
+        importFailed: 'Import failed. Please ensure the file is a plain text file.',
+        dbInitializing: 'Initializing Database...',
+        totalWordsLabel: 'Total: {count}',
+        newWordsLabel: 'New: {count}',
+        suspendedWordsLabel: 'Suspended: {count}',
+        exportPrompt: 'Which type of cards do you want to export?',
+        exportActive: 'Active Cards',
+        exportSuspended: 'Suspended Cards'
+    },
+    'ja': {
+        title: '暗記プログラム',
+        languageLabel: '言語:',
+        mainHeading: '暗記プログラム',
+        listHeading: '単語リストを入力',
+        instructions: '各行に1つのエントリ、形式：<b>問題, 答え1, 答え2...</b>、例：',
+        dropZoneLabel: 'ここにファイルをドラッグ＆ドロップするか、クリックしてファイルを選択します',
+        randomOrderLabel: 'ランダムな順序',
+        smartReviewButton: 'スマートレビュー ({dueCount})',
+        cramButton: '集中学習',
+        reviewing: '復習中...', 
+        showAllCardsButton: '全カード表示',
+        reviewOptionsLegend: 'レビュー選択',
+        reviewScopeLegend: 'レビュー範囲',
+        scopeAllLabel: 'すべての単語',
+        scopeTextareaLabel: 'テキストエリアの単語',
+        clearCacheButton: '全ローカルデータをクリア',
+        cacheClearedAlert: '全ローカルデータがクリアされました！',
+        confirmClearCache: '本当にすべてのローカルデータをクリアしますか？これには、すべてのカード記録と言語設定が含まれます。この操作は元に戻せません。',
+        answerPlaceholder: '答えを入力してEnterキーを押す',
+        continueButton: '次へ',
+        terminateButton: 'テスト終了',
+        summaryHeading: 'セッション完了！',
+        correctLabel: '正解',
+        incorrectLabel: '不正解',
+        incorrectWordsHeading: 'このセッションで間違った単語',
+        restartButton: 'メインメニューに戻る',
+        allCardsModalHeading: '全カードの状態',
+        correctFeedback: '正解！答えは: {answers}',
+        incorrectFeedback: '不正解！答えは: {answers}',
+        emptyListAlert: '単語リストが空か、形式が正しくありません。',
+        noDueCards: '今日レビューするカードはありません！',
+        noCardsToCram: '集中学習できるカードがありません。',
+        autoAdvanceLabel: '正解の場合、自動的に次に進む',
+        cardQuestion: '問題',
+        cardAnswers: '答え',
+        cardNextReview: '次回レビュー',
+        cardInterval: '間隔(日)',
+        cardEfactor: '難易度係数',
+        cardStatus: '状態',
+        cardActions: '操作',
+        statusNew: '新規',
+        statusLearning: '学習中',
+        statusReview: '復習',
+        statusDue: '期限切れ',
+        statusSuspended: '一時停止中',
+        today: '今日',
+        noCardsFound: 'カードが見つかりません。',
+        suspend: '一時停止',
+        restore: '再開',
+        activeCards: 'アクティブなカード',
+        suspendedCards: '一時停止中',
+        currentListCards: '現在のリスト',
+        allTimeCards: '全カード',
+        lastUpdatedLabel: '最終更新日：',
+        settingsButton: '設定',
+        settingsModalHeading: 'アルゴリズムパラメータ設定',
+        initialIntervalLabel: '初回正解後の間隔',
+        secondIntervalLabel: '2回目正解後の間隔',
+        lapseIntervalLabel: '不正解後の間隔',
+        saveButton: '保存',
+        resetButton: 'デフォルトに戻す',
+        minutes: '分',
+        hours: '時間',
+        days: '日',
+        dangerZoneHeading: '危険区域',
+        exportButton: 'リストをエクスポート',
+        importButton: 'リストをインポート',
+        confirmImport: '新しい単語リストをインポートしてもよろしいですか？これにより、ファイルに存在する新しいカードのみが追加され、テキストエリアのリストには影響しません。',
+        importSuccess: '単語リストが正常にインポートされました！{count}枚の新しいカードが追加されました。',
+        importFailed: 'インポートに失敗しました。ファイルがプレーンテキスト形式であることを確認してください。',
+        dbInitializing: 'データベースを初期化しています...',
+        totalWordsLabel: '合計: {count}',
+        newWordsLabel: '新規: {count}',
+        suspendedWordsLabel: '一時停止: {count}',
+        exportPrompt: 'どのタイプのカードをエクスポートしますか？',
+        exportActive: 'アクティブなカード',
+        exportSuspended: '一時停止中のカード'
+    }
+};
 document.addEventListener('DOMContentLoaded', async () => {
-    const suspendedCountDisplay = document.getElementById('suspended-count-display');
-
     // --- DOM Elements ---
     const setupEl = document.getElementById('setup');
     const cardEl = document.getElementById('card');
@@ -282,6 +280,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     const totalWordsStatEl = document.getElementById('total-words-stat');
     const newWordsStatEl = document.getElementById('new-words-stat');
     const suspendedWordsStatEl = document.getElementById('suspended-words-stat');
+    const scopeAllRadio = document.getElementById('scope-all');
+    const scopeTextareaRadio = document.getElementById('scope-textarea');
 
     let cramButton;
 
@@ -306,6 +306,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     // --- Storage Keys ---
     const WORD_LIST_STORAGE_KEY = 'wordListContent';
     const LANGUAGE_STORAGE_KEY = 'preferredLanguage';
+    const REVIEW_SCOPE_KEY = 'reviewScope';
 
     // --- Database Manager ---
     const dbManager = {
@@ -391,6 +392,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 request.onsuccess = () => {
                     localStorage.removeItem(WORD_LIST_STORAGE_KEY);
                     localStorage.removeItem(LANGUAGE_STORAGE_KEY);
+                    localStorage.removeItem(REVIEW_SCOPE_KEY);
                     resolve();
                 };
                 request.onerror = () => reject("Error deleting database.");
@@ -443,13 +445,11 @@ document.addEventListener('DOMContentLoaded', async () => {
 
                     const existingCard = allCards.get(question);
                     if (existingCard) {
-                        // Card exists, check if answers are different
                         if (JSON.stringify(existingCard.answers) !== JSON.stringify(answers)) {
                             existingCard.answers = answers;
                             updateStmt.run([JSON.stringify(answers), question]);
                         }
                     } else {
-                        // New card
                         const newCard = {
                             question: question,
                             answers: answers,
@@ -1232,18 +1232,18 @@ document.addEventListener('DOMContentLoaded', async () => {
             const loadingOverlay = document.getElementById('loading-overlay');
             try {
                 const savedLang = localStorage.getItem(LANGUAGE_STORAGE_KEY);
-                            const browserLang = navigator.language.split('-')[0];
-                            let initialLang = 'en';
+                const browserLang = navigator.language.split('-')[0];
+                let initialLang = 'en';
                 
-                            if (savedLang && translations[savedLang]) initialLang = savedLang;
-                            else if (translations[navigator.language]) initialLang = navigator.language;
-                            else if (translations[browserLang]) initialLang = browserLang;
+                if (savedLang && translations[savedLang]) initialLang = savedLang;
+                else if (translations[navigator.language]) initialLang = navigator.language;
+                else if (translations[browserLang]) initialLang = browserLang;
                 
-                            document.documentElement.lang = initialLang;
+                document.documentElement.lang = initialLang;
                 
-                            if (loadingOverlay) {
-                                loadingOverlay.textContent = translations[initialLang].dbInitializing;
-                            }                
+                if (loadingOverlay) {
+                    loadingOverlay.textContent = translations[initialLang].dbInitializing;
+                }                
                 errorModal.style.display = 'none';
                 settingsModal.style.display = 'none';
     
@@ -1255,14 +1255,22 @@ document.addEventListener('DOMContentLoaded', async () => {
     
                 const savedWordList = localStorage.getItem(WORD_LIST_STORAGE_KEY);
                 if (savedWordList) wordListInput.value = savedWordList;
+
+                const savedScope = localStorage.getItem(REVIEW_SCOPE_KEY);
+                if (savedScope === 'textarea') {
+                    scopeTextareaRadio.checked = true;
+                } else {
+                    scopeAllRadio.checked = true;
+                }
     
                 await setLanguage(initialLang);
                 await cardManager.load();
                 await cardManager.syncFromTextarea();
                 await showSetup();
     
-                document.getElementById('scope-all').addEventListener('change', cardManager.updateDueCount);
-                document.getElementById('scope-textarea').addEventListener('change', cardManager.updateDueCount);
+                scopeAllRadio.addEventListener('change', () => localStorage.setItem(REVIEW_SCOPE_KEY, 'all'));
+                scopeTextareaRadio.addEventListener('change', () => localStorage.setItem(REVIEW_SCOPE_KEY, 'textarea'));
+
             } catch (error) {
                 console.error("Initialization failed:", error);
                 if (loadingOverlay) {
