@@ -1186,17 +1186,18 @@ document.addEventListener('DOMContentLoaded', async () => {
                         const loadingOverlay = document.getElementById('loading-overlay');
                         try {
                             const savedLang = localStorage.getItem(LANGUAGE_STORAGE_KEY);
-                            const browserLang = navigator.language.split('-')[0];
-                            let initialLang = 'en';
-                
-                            if (savedLang && translations[savedLang]) initialLang = savedLang;
-                            else if (translations[navigator.language]) initialLang = navigator.language;
-                            else if (translations[browserLang]) initialLang = browserLang;
-                
-                            if (loadingOverlay) {
-                                loadingOverlay.textContent = translations[initialLang].dbInitializing;
-                            }
-                
+                                        const browserLang = navigator.language.split('-')[0];
+                                        let initialLang = 'en';
+                            
+                                        if (savedLang && translations[savedLang]) initialLang = savedLang;
+                                        else if (translations[navigator.language]) initialLang = navigator.language;
+                                        else if (translations[browserLang]) initialLang = browserLang;
+                            
+                                        document.documentElement.lang = initialLang;
+                            
+                                        if (loadingOverlay) {
+                                            loadingOverlay.textContent = translations[initialLang].dbInitializing;
+                                        }                
                             errorModal.style.display = 'none';
                             settingsModal.style.display = 'none';
                 
