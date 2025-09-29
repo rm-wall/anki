@@ -621,7 +621,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         getDueCards: () => {
             const now = new Date();
             return Array.from(allCards.values()).filter(card =>
-                !card.isSuspended && new Date(card.nextReviewDate) <= now
+                !card.isSuspended && (new Date(card.nextReviewDate) <= now || card.repetitions === 0)
             );
         },
 
