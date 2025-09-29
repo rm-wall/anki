@@ -321,6 +321,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     const secondIntervalUnitInput = document.getElementById('setting-second-interval-unit');
     const lapseIntervalValueInput = document.getElementById('setting-lapse-interval-value');
     const lapseIntervalUnitInput = document.getElementById('setting-lapse-interval-unit');
+    const requiredStreakInput = document.getElementById('required-streak-input');
+    const penaltyInput = document.getElementById('penalty-input');
     const settingsModalCloseButton = settingsModal.querySelector('.close-button');
     const textareaStatsEl = document.getElementById('textarea-stats');
     const totalWordsStatEl = document.getElementById('total-words-stat');
@@ -354,6 +356,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         initialInterval: { value: 1, unit: 'days' },
         secondInterval: { value: 6, unit: 'days' },
         lapseInterval: { value: 10, unit: 'minutes' },
+        requiredStreak: 2,
+        penalty: 2,
     };
 
     // --- Storage Keys ---
@@ -1319,6 +1323,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             initialInterval: { ...defaultSrsSettings.initialInterval, ...(savedSettings.initialInterval || {}) },
             secondInterval: { ...defaultSrsSettings.secondInterval, ...(savedSettings.secondInterval || {}) },
             lapseInterval: { ...defaultSrsSettings.lapseInterval, ...(savedSettings.lapseInterval || {}) },
+            requiredStreak: savedSettings.requiredStreak || defaultSrsSettings.requiredStreak,
+            penalty: savedSettings.penalty || defaultSrsSettings.penalty,
         };
     }
 
@@ -1329,6 +1335,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         srsSettings.secondInterval.unit = secondIntervalUnitInput.value;
         srsSettings.lapseInterval.value = parseInt(lapseIntervalValueInput.value, 10) || defaultSrsSettings.lapseInterval.value;
         srsSettings.lapseInterval.unit = lapseIntervalUnitInput.value;
+        srsSettings.requiredStreak = parseInt(requiredStreakInput.value, 10) || defaultSrsSettings.requiredStreak;
+        srsSettings.penalty = parseInt(penaltyInput.value, 10) || defaultSrsSettings.penalty;
 
         dbManager.db.run("INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)", ['srsSettings', JSON.stringify(srsSettings)]);
         await dbManager.saveDbToIndexedDB();
@@ -1341,6 +1349,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         secondIntervalUnitInput.value = srsSettings.secondInterval.unit;
         lapseIntervalValueInput.value = srsSettings.lapseInterval.value;
         lapseIntervalUnitInput.value = srsSettings.lapseInterval.unit;
+        requiredStreakInput.value = srsSettings.requiredStreak;
+        penaltyInput.value = srsSettings.penalty;
     }
 
     // --- Event Listeners ---
