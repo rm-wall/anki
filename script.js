@@ -819,6 +819,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             setTimeout(() => answerInput.focus(), 0);
 
             starButton.textContent = currentCard.isStarred ? '★' : '☆';
+            starButton.classList.toggle('starred', currentCard.isStarred);
 
             const requiredStreak = parseInt(document.getElementById('required-streak-input').value, 10) || 2;
             const progress = Math.max(0, (currentCard.correctStreak || 0) / requiredStreak);
@@ -1435,6 +1436,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (sessionCards.length > 0) {
             const currentCard = sessionCards[currentCardIndex];
             await cardManager.toggleStar(currentCard.question);
+            currentCard.isStarred = !currentCard.isStarred; // Manually sync the session card's state
             starButton.textContent = currentCard.isStarred ? '★' : '☆';
             starButton.classList.toggle('starred', currentCard.isStarred);
         }
