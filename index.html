@@ -28,13 +28,16 @@
                 <p data-i18n="dropZoneLabel">将文件拖放到此处，或点击选择文件</p>
                 <input type="file" id="file-input" accept=".txt,.csv" style="display: none;">
             </div>
-            <textarea id="word-list-input" rows="10">桜,さくら,sakura
+            <div class="textarea-container">
+                <textarea id="word-list-input" rows="10">桜,さくら,sakura
 車,くるま,kuruma
 猫,ねこ,neko
 犬,いぬ,inu
 食べる,たべる,taberu
 飲む,のむ,nomu
 日本語,にほんご,nihongo,Japanese,Japanisch</textarea>
+                <button id="import-from-textarea-button" class="import-textarea-button" data-i18n="syncButtonLabel"></button>
+            </div>
             <div id="textarea-stats" class="textarea-stats">
                 <span id="total-words-stat"></span>
                 <span id="new-words-stat"></span>

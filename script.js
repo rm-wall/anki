@@ -90,7 +90,9 @@ const translations = {
         deleteButtonLabel: '删除',
         confirmDeleteCard: '确定要永久删除这张卡片吗？此操作不可撤销。',
         requiredStreakLabel: '掌握所需连对次数',
-        penaltyLabel: '答错扣除连对次数'
+        penaltyLabel: '答错扣除连对次数',
+        syncButtonLabel: '同步',
+        syncSuccessLabel: '已同步'
     },
     'en': {
         title: 'Anki Program',
@@ -182,7 +184,9 @@ const translations = {
         deleteButtonLabel: 'Delete',
         confirmDeleteCard: 'Are you sure you want to permanently delete this card? This action cannot be undone.',
         requiredStreakLabel: 'Required Streak',
-        penaltyLabel: 'Incorrect Penalty'
+        penaltyLabel: 'Incorrect Penalty',
+        syncButtonLabel: 'Sync',
+        syncSuccessLabel: 'Synced!'
     },
     'ja': {
         title: '暗記プログラム',
@@ -274,7 +278,9 @@ const translations = {
         deleteButtonLabel: '削除',
         confirmDeleteCard: 'このカードを完全に削除してもよろしいですか？この操作は元に戻せません。',
         requiredStreakLabel: '習得に必要な連続正解数',
-        penaltyLabel: '不正解時のペナルティ'
+        penaltyLabel: '不正解時のペナルティ',
+        syncButtonLabel: '同期',
+        syncSuccessLabel: '同期完了'
     }
 };
 document.addEventListener('DOMContentLoaded', async () => {
@@ -328,6 +334,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const starButton = document.getElementById('star-button');
     const suspendButton = document.getElementById('suspend-button');
     const progressBar = document.getElementById('progress-bar');
+    const importFromTextareaButton = document.getElementById('import-from-textarea-button');
 
     let cramButton;
 
@@ -1370,6 +1377,25 @@ document.addEventListener('DOMContentLoaded', async () => {
     restartButton.addEventListener('click', showSetup);
     terminateButton.addEventListener('click', showSummary);
 
+    importFromTextareaButton.addEventListener('click', async () => {
+        await cardManager.syncFromTextarea();
+        
+        const lang = languageSelect.value;
+        const t = (key, fallback) => translations[lang][key] || fallback;
+
+        // Provide feedback
+        const originalText = t('syncButtonLabel', 'Sync');
+        importFromTextareaButton.textContent = t('syncSuccessLabel', 'Synced!');
+        importFromTextareaButton.disabled = true;
+        importFromTextareaButton.style.backgroundColor = '#34c759'; // Green for success
+
+        setTimeout(() => {
+            importFromTextareaButton.textContent = originalText;
+            importFromTextareaButton.disabled = false;
+            importFromTextareaButton.style.backgroundColor = ''; // Revert to original color from CSS
+        }, 2000);
+    });
+
     const closeAllCardsModal = () => {
         errorModal.style.display = 'none';
         cardManager.updateDueCount();
@@ -1382,7 +1408,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
     wordListInput.addEventListener('input', async () => {
         localStorage.setItem(WORD_LIST_STORAGE_KEY, wordListInput.value);
-        await cardManager.syncFromTextarea();
     });
 
     modalIncorrectListEl.addEventListener('click', async (event) => {
