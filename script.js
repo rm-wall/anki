@@ -1565,6 +1565,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 if (!dbManager.db) return; // Stop if DB failed to init
     
                 await loadSettings();
+                populateSettingsModal();
                 setupButtons();
     
                 const savedWordList = localStorage.getItem(WORD_LIST_STORAGE_KEY);
