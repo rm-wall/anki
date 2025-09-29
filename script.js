@@ -906,7 +906,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             // --- INCORRECT ANSWER ---
             isAnswerCorrect = false;
             currentCard.sessionRequiredStreak += penalty;
-            currentCard.correctStreak = 0; // Reset streak
 
             const progress = Math.max(0, (currentCard.correctStreak || 0) / currentCard.sessionRequiredStreak);
             progressBar.style.width = `${progress * 100}%`;
