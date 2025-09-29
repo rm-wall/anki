@@ -351,6 +351,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     let isAnswerCorrect = false;
     let isCramming = false;
     let allCards = new Map();
+    let lastCorrectlyAnsweredCard = null;
     let srsSettings = {};
     const defaultSrsSettings = {
         initialInterval: { value: 1, unit: 'days' },
@@ -874,6 +875,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (processedAnswers.includes(processedUserAnswer)) {
             // --- CORRECT ANSWER ---
             isAnswerCorrect = true;
+            lastCorrectlyAnsweredCard = currentCard; // Store the card for 'Practice Again'
             currentCard.correctStreak = (currentCard.correctStreak || 0) + 1;
             
             const progress = Math.min(1, (currentCard.correctStreak || 0) / currentCard.sessionRequiredStreak);
@@ -895,7 +897,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 setTimeout(proceedToNextCard, 1500);
             } else {
                 continueButton.style.display = 'inline-block';
-                redoButton.style.display = 'none'; // This button is confusing with the new queue logic
+                redoButton.style.display = 'inline-block';
                 suspendButton.style.display = 'inline-block';
             }
         } else {
@@ -1353,14 +1355,24 @@ document.addEventListener('DOMContentLoaded', async () => {
     showErrorsButton.addEventListener('click', showAllCardsModal);
 
     redoButton.addEventListener('click', () => {
+        if (!lastCorrectlyAnsweredCard) return;
+
+        // Put the last correct card back at the front of the queue
+        sessionCards.unshift(lastCorrectlyAnsweredCard);
+        lastCorrectlyAnsweredCard = null; // Clear it after use
+
+        // Reset UI for re-practice
         answerInput.value = '';
         answerInput.disabled = false;
         feedbackEl.innerHTML = '&nbsp;';
         feedbackEl.className = '';
         continueButton.style.display = 'none';
         redoButton.style.display = 'none';
+        suspendButton.style.display = 'none';
         isChecking = false;
         isAnswerCorrect = false;
+        
+        displayNextCard();
         answerInput.focus();
     });
 
