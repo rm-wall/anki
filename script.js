@@ -757,7 +757,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         if (randomOrderCheckbox.checked) shuffle(cards);
 
-        sessionCards = cards.map(card => ({ ...card, correctStreak: 0 }));
+        const requiredStreakSetting = parseInt(document.getElementById('required-streak-input').value, 10) || 2;
+        sessionCards = cards.map(card => ({ ...card, correctStreak: 0, sessionRequiredStreak: requiredStreakSetting }));
         currentCardIndex = 0;
         sessionCorrectCount = 0;
         sessionIncorrectCount = 0;
@@ -821,8 +822,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             starButton.textContent = currentCard.isStarred ? '★' : '☆';
             starButton.classList.toggle('starred', currentCard.isStarred);
 
-            const requiredStreak = parseInt(document.getElementById('required-streak-input').value, 10) || 2;
-            const progress = Math.max(0, (currentCard.correctStreak || 0) / requiredStreak);
+            const progress = Math.max(0, (currentCard.correctStreak || 0) / currentCard.sessionRequiredStreak);
             progressBar.style.width = `${progress * 100}%`;
         } else {
             if (!isCramming && reviewAgainPile.length > 0) {
@@ -864,19 +864,17 @@ document.addEventListener('DOMContentLoaded', async () => {
         const currentCard = sessionCards[currentCardIndex];
         const processedAnswers = currentCard.answers.map(a => a.replace(/\s/g, '').toLowerCase());
 
-        const requiredStreak = parseInt(document.getElementById('required-streak-input').value, 10) || 2;
         const penalty = parseInt(document.getElementById('penalty-input').value, 10) || 2;
-
         answerInput.disabled = true;
 
         if (processedAnswers.includes(processedUserAnswer)) {
             isAnswerCorrect = true;
             currentCard.correctStreak = (currentCard.correctStreak || 0) + 1;
             
-            const progress = Math.min(1, (currentCard.correctStreak || 0) / requiredStreak);
+            const progress = Math.min(1, (currentCard.correctStreak || 0) / currentCard.sessionRequiredStreak);
             progressBar.style.width = `${progress * 100}%`;
 
-            if (currentCard.correctStreak < requiredStreak) {
+            if (currentCard.correctStreak < currentCard.sessionRequiredStreak) {
                 if (!reviewAgainPile.some(c => c.question === currentCard.question)) {
                     reviewAgainPile.push(currentCard);
                 }
@@ -899,8 +897,9 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         } else {
             isAnswerCorrect = false;
-            currentCard.correctStreak = Math.max(0, (currentCard.correctStreak || 0) - penalty);
-            const progress = (currentCard.correctStreak || 0) / requiredStreak;
+            currentCard.sessionRequiredStreak += penalty;
+            // Note: correctStreak is no longer reset to 0, preserving some progress.
+            const progress = Math.max(0, (currentCard.correctStreak || 0) / currentCard.sessionRequiredStreak);
             progressBar.style.width = `${progress * 100}%`;
 
             await handleIncorrectAnswer(currentCard);
