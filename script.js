@@ -371,6 +371,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 request.onsuccess = e => {
                     const db = e.target.result;
                     if (!db.objectStoreNames.contains('files')) {
+                        db.close();
                         resolve(null);
                         return;
                     }
@@ -379,6 +380,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                     const getReq = store.get('anki.sqlite');
                     getReq.onsuccess = () => resolve(getReq.result);
                     getReq.onerror = () => reject("Failed to get DB file from IndexedDB");
+                    tx.oncomplete = () => db.close();
+                    tx.onerror = () => db.close();
                 };
                 request.onupgradeneeded = e => {
                     const db = e.target.result;
@@ -389,17 +392,29 @@ document.addEventListener('DOMContentLoaded', async () => {
             });
         },
         saveDbToIndexedDB: async () => {
+            if (!dbManager.db) return;
             const data = dbManager.db.export();
             return new Promise((resolve, reject) => {
                 const request = indexedDB.open("AnkiAppDB", 1);
                 request.onerror = e => reject("IndexedDB error: " + e.target.errorCode);
                 request.onsuccess = e => {
                     const db = e.target.result;
-                    const tx = db.transaction('files', 'readwrite');
-                    const store = tx.objectStore('files');
-                    store.put(data, 'anki.sqlite');
-                    tx.oncomplete = () => resolve();
-                    tx.onerror = () => reject("Failed to save DB file to IndexedDB");
+                    try {
+                        const tx = db.transaction('files', 'readwrite');
+                        const store = tx.objectStore('files');
+                        store.put(data, 'anki.sqlite');
+                        tx.oncomplete = () => {
+                            db.close();
+                            resolve();
+                        };
+                        tx.onerror = () => {
+                            db.close();
+                            reject("Failed to save DB file to IndexedDB");
+                        };
+                    } catch (err) {
+                        db.close();
+                        reject(err);
+                    }
                 };
             });
         },
@@ -424,6 +439,10 @@ document.addEventListener('DOMContentLoaded', async () => {
             `);
         },
         clearAllData: async () => {
+            if (dbManager.db) {
+                dbManager.db.close();
+                dbManager.db = null;
+            }
             return new Promise((resolve, reject) => {
                 const request = indexedDB.deleteDatabase("AnkiAppDB");
                 request.onsuccess = () => {
@@ -432,8 +451,11 @@ document.addEventListener('DOMContentLoaded', async () => {
                     localStorage.removeItem(REVIEW_SCOPE_KEY);
                     resolve();
                 };
-                request.onerror = () => reject("Error deleting database.");
-                request.onblocked = () => reject("Database deletion blocked.");
+                request.onerror = (e) => reject("Error deleting database: " + e.target.error);
+                request.onblocked = (e) => {
+                    console.warn('Database deletion blocked.', e);
+                    reject("Database deletion blocked. Please reload the page and try again.");
+                };
             });
         }
     };
