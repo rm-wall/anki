@@ -81,6 +81,9 @@ const translations = {
         exportPrompt: '要导出哪种类型的卡片？',
         exportActive: '活动卡片',
         exportSuspended: '暂停卡片',
+        exportStatusActive: '活动',
+        exportStatusSuspended: '暂停',
+        exportStatusStarred: '星标',
         starredWordsLabel: '星标: {count}',
         scopeStarredLabel: '星标单词',
         starredCards: '星标卡片',
@@ -168,6 +171,9 @@ const translations = {
         exportPrompt: 'Which type of cards do you want to export?',
         exportActive: 'Active Cards',
         exportSuspended: 'Suspended Cards',
+        exportStatusActive: 'active',
+        exportStatusSuspended: 'suspended',
+        exportStatusStarred: 'starred',
         starredWordsLabel: 'Starred: {count}',
         scopeStarredLabel: 'Starred Words',
         starredCards: 'Starred Cards',
@@ -255,6 +261,9 @@ const translations = {
         exportPrompt: 'どのタイプのカードをエクスポートしますか？',
         exportActive: 'アクティブなカード',
         exportSuspended: '一時停止中のカード',
+        exportStatusActive: 'アクティブ',
+        exportStatusSuspended: '一時停止中',
+        exportStatusStarred: 'スター付き',
         starredWordsLabel: 'スター付き: {count}',
         scopeStarredLabel: 'スター付き単語',
         starredCards: 'スター付きカード',
@@ -535,19 +544,29 @@ document.addEventListener('DOMContentLoaded', async () => {
         importFromText: async (text, importContext = 'active') => {
             const lines = text.split('\n');
             let newCardsAdded = 0;
+            let updatedCards = 0;
 
             if (text) {
-                const stmt = dbManager.db.prepare("INSERT OR IGNORE INTO cards (question, answers, repetitions, efactor, interval, nextReviewDate, isSuspended, isStarred) VALUES (?, ?, 0, 2.5, 0, ?, ?, ?)");
+                const stmt = dbManager.db.prepare(`
+                    INSERT INTO cards (question, answers, repetitions, efactor, interval, nextReviewDate, isSuspended, isStarred) 
+                    VALUES (?, ?, 0, 2.5, 0, ?, ?, ?)
+                    ON CONFLICT(question) DO UPDATE SET
+                        isSuspended = CASE WHEN excluded.isSuspended = 1 THEN 1 ELSE isSuspended END,
+                        isStarred = CASE WHEN excluded.isStarred = 1 THEN 1 ELSE isStarred END;
+                `);
+
                 lines.forEach(line => {
                     const parts = line.split(',').map(part => part.trim()).filter(part => part);
                     if (parts.length < 2) return;
 
                     const question = parts[0];
                     const answers = parts;
-                    if (!allCards.has(question)) {
-                        const isSuspended = importContext === 'suspended' ? 1 : 0;
-                        const isStarred = importContext === 'starred' ? 1 : 0;
-
+                    const isSuspended = importContext === 'suspended' ? 1 : 0;
+                    const isStarred = importContext === 'starred' ? 1 : 0;
+                    
+                    const existingCard = allCards.get(question);
+                    if (!existingCard) {
+                        newCardsAdded++;
                         const newCard = {
                             question: question,
                             answers: answers,
@@ -559,14 +578,20 @@ document.addEventListener('DOMContentLoaded', async () => {
                             isStarred: isStarred === 1,
                         };
                         allCards.set(question, newCard);
-                        stmt.run([question, JSON.stringify(answers), newCard.nextReviewDate, isSuspended, isStarred]);
-                        newCardsAdded++;
+                    } else {
+                        if ((isSuspended && !existingCard.isSuspended) || (isStarred && !existingCard.isStarred)) {
+                            updatedCards++;
+                            if (isSuspended) existingCard.isSuspended = true;
+                            if (isStarred) existingCard.isStarred = true;
+                        }
                     }
+                    
+                    stmt.run([question, JSON.stringify(answers), cardManager.getNowISO(), isSuspended, isStarred]);
                 });
                 stmt.free();
             }
 
-            if (newCardsAdded > 0) {
+            if (newCardsAdded > 0 || updatedCards > 0) {
                 await dbManager.saveDbToIndexedDB();
                 await cardManager.updateDueCount();
             }
@@ -1141,8 +1166,23 @@ document.addEventListener('DOMContentLoaded', async () => {
         const pad = (num) => num.toString().padStart(2, '0');
         const timestamp = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}_${pad(now.getHours())}-${pad(now.getMinutes())}-${pad(now.getSeconds())}`;
         
+        let statusKey;
+        switch (filterType) {
+            case 'suspended':
+                statusKey = 'exportStatusSuspended';
+                break;
+            case 'starred':
+                statusKey = 'exportStatusStarred';
+                break;
+            case 'active':
+            default:
+                statusKey = 'exportStatusActive';
+                break;
+        }
+        const localizedStatus = t(statusKey, filterType);
+
         a.href = url;
-        a.download = `anki_${filterType}_${timestamp}.txt`;
+        a.download = `anki_${localizedStatus}_${timestamp}.txt`;
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
