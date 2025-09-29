@@ -532,12 +532,12 @@ document.addEventListener('DOMContentLoaded', async () => {
             updateTextareaStats();
         },
 
-        importFromText: async (text) => {
+        importFromText: async (text, importContext = 'active') => {
             const lines = text.split('\n');
             let newCardsAdded = 0;
 
             if (text) {
-                const stmt = dbManager.db.prepare("INSERT OR IGNORE INTO cards (question, answers, repetitions, efactor, interval, nextReviewDate, isSuspended, isStarred) VALUES (?, ?, 0, 2.5, 0, ?, 0, 0)");
+                const stmt = dbManager.db.prepare("INSERT OR IGNORE INTO cards (question, answers, repetitions, efactor, interval, nextReviewDate, isSuspended, isStarred) VALUES (?, ?, 0, 2.5, 0, ?, ?, ?)");
                 lines.forEach(line => {
                     const parts = line.split(',').map(part => part.trim()).filter(part => part);
                     if (parts.length < 2) return;
@@ -545,6 +545,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                     const question = parts[0];
                     const answers = parts;
                     if (!allCards.has(question)) {
+                        const isSuspended = importContext === 'suspended' ? 1 : 0;
+                        const isStarred = importContext === 'starred' ? 1 : 0;
+
                         const newCard = {
                             question: question,
                             answers: answers,
@@ -552,11 +555,11 @@ document.addEventListener('DOMContentLoaded', async () => {
                             efactor: 2.5,
                             interval: 0,
                             nextReviewDate: cardManager.getNowISO(),
-                            isSuspended: false,
-                            isStarred: false,
+                            isSuspended: isSuspended === 1,
+                            isStarred: isStarred === 1,
                         };
                         allCards.set(question, newCard);
-                        stmt.run([question, JSON.stringify(answers), newCard.nextReviewDate]);
+                        stmt.run([question, JSON.stringify(answers), newCard.nextReviewDate, isSuspended, isStarred]);
                         newCardsAdded++;
                     }
                 });
@@ -1109,10 +1112,19 @@ document.addEventListener('DOMContentLoaded', async () => {
         const activeFilterBtn = modalIncorrectListEl.querySelector('.tab-btn[data-filter].active');
         const filterType = activeFilterBtn ? activeFilterBtn.dataset.filter : 'active';
 
-        const isExportingActive = filterType === 'active';
-        const status = isExportingActive ? 'active' : 'suspended';
-        
-        const cardsToExport = Array.from(allCards.values()).filter(card => isExportingActive ? !card.isSuspended : card.isSuspended);
+        let cardsToExport;
+        switch (filterType) {
+            case 'suspended':
+                cardsToExport = Array.from(allCards.values()).filter(card => card.isSuspended);
+                break;
+            case 'starred':
+                cardsToExport = Array.from(allCards.values()).filter(card => card.isStarred);
+                break;
+            case 'active':
+            default:
+                cardsToExport = Array.from(allCards.values()).filter(card => !card.isSuspended);
+                break;
+        }
 
         if (cardsToExport.length === 0) {
             alert('No cards to export for the selected status.');
@@ -1130,7 +1142,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         const timestamp = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}_${pad(now.getHours())}-${pad(now.getMinutes())}-${pad(now.getSeconds())}`;
         
         a.href = url;
-        a.download = `anki_${status}_${timestamp}.txt`;
+        a.download = `anki_${filterType}_${timestamp}.txt`;
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
@@ -1146,13 +1158,14 @@ document.addEventListener('DOMContentLoaded', async () => {
             const content = e.target.result;
             if (confirm(translations[languageSelect.value].confirmImport)) {
                 try {
-                    const newCardsCount = await cardManager.importFromText(content);
+                    const activeFilterBtn = modalIncorrectListEl.querySelector('.tab-btn[data-filter].active');
+                    const importContext = activeFilterBtn ? activeFilterBtn.dataset.filter : 'active';
+
+                    const newCardsCount = await cardManager.importFromText(content, importContext);
                     const successMsgTemplate = translations[languageSelect.value].importSuccess;
                     alert(successMsgTemplate.replace('{count}', newCardsCount));
 
-                    const activeFilterBtn = modalIncorrectListEl.querySelector('.tab-btn[data-filter].active');
-                    const filterType = activeFilterBtn ? activeFilterBtn.dataset.filter : 'active';
-                    renderAllCardsModal('all', filterType);
+                    renderAllCardsModal('all', importContext);
 
                 } catch (error) {
                     alert(translations[languageSelect.value].importFailed);
