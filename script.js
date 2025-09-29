@@ -327,6 +327,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const scopeStarredRadio = document.getElementById('scope-starred');
     const starButton = document.getElementById('star-button');
     const suspendButton = document.getElementById('suspend-button');
+    const progressBar = document.getElementById('progress-bar');
 
     let cramButton;
 
@@ -815,10 +816,13 @@ document.addEventListener('DOMContentLoaded', async () => {
             const currentCard = sessionCards[currentCardIndex];
             questionEl.textContent = currentCard.question;
             answerInput.value = '';
-            answerInput.focus();
+            setTimeout(() => answerInput.focus(), 0);
 
             starButton.textContent = currentCard.isStarred ? '★' : '☆';
-            starButton.classList.toggle('starred', currentCard.isStarred);
+
+            const requiredStreak = parseInt(document.getElementById('required-streak-input').value, 10) || 2;
+            const progress = Math.max(0, (currentCard.correctStreak || 0) / requiredStreak);
+            progressBar.style.width = `${progress * 100}%`;
         } else {
             if (!isCramming && reviewAgainPile.length > 0) {
                 sessionCards = [...reviewAgainPile];
@@ -867,19 +871,22 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (processedAnswers.includes(processedUserAnswer)) {
             isAnswerCorrect = true;
             currentCard.correctStreak = (currentCard.correctStreak || 0) + 1;
+            
+            const progress = Math.min(1, (currentCard.correctStreak || 0) / requiredStreak);
+            progressBar.style.width = `${progress * 100}%`;
 
             if (currentCard.correctStreak < requiredStreak) {
                 if (!reviewAgainPile.some(c => c.question === currentCard.question)) {
                     reviewAgainPile.push(currentCard);
                 }
-                await handleCorrectAnswer(currentCard, ` (连对 ${currentCard.correctStreak}/${requiredStreak})`);
+                await handleCorrectAnswer(currentCard);
             } else {
                 // 从 reviewAgainPile 中移除（如果存在）
                 const indexInPile = reviewAgainPile.findIndex(c => c.question === currentCard.question);
                 if (indexInPile > -1) {
                     reviewAgainPile.splice(indexInPile, 1);
                 }
-                await handleCorrectAnswer(currentCard, ' (已掌握!)');
+                await handleCorrectAnswer(currentCard);
             }
             
             if (autoAdvanceCheckbox.checked) {
@@ -889,12 +896,13 @@ document.addEventListener('DOMContentLoaded', async () => {
                 redoButton.style.display = 'inline-block';
                 suspendButton.style.display = 'inline-block';
             }
-            answerInput.blur();
         } else {
             isAnswerCorrect = false;
-            currentCard.correctStreak = (currentCard.correctStreak || 0) - penalty;
+            currentCard.correctStreak = Math.max(0, (currentCard.correctStreak || 0) - penalty);
+            const progress = (currentCard.correctStreak || 0) / requiredStreak;
+            progressBar.style.width = `${progress * 100}%`;
+
             await handleIncorrectAnswer(currentCard);
-            continueButton.style.display = 'inline-block';
             answerInput.disabled = false;
             isChecking = false;
             answerInput.focus();
@@ -915,9 +923,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         displayNextCard();
     }
 
-    async function handleCorrectAnswer(card, statusText = '') {
+    async function handleCorrectAnswer(card) {
         const feedbackText = translations[languageSelect.value].correctFeedback;
-        feedbackEl.textContent = feedbackText.replace('{answers}', card.answers.join(' / ')) + statusText;
+        feedbackEl.textContent = feedbackText.replace('{answers}', card.answers.join(' / '));
         feedbackEl.className = 'correct';
         sessionCorrectCount++;
         if (!isCramming) {

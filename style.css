@@ -626,3 +626,22 @@ button:disabled {
     font-size: 1.2rem;
     color: #333;
 }
+
+/* --- Progress Bar --- */
+#progress-bar-container {
+    height: 4px;
+    width: 100%;
+    background-color: #e0e0e0;
+    border-radius: 2px;
+    margin-top: 10px;
+    margin-bottom: 20px;
+    overflow: hidden;
+}
+
+#progress-bar {
+    height: 100%;
+    width: 0; /* Initially 0 */
+    background-color: #007aff;
+    border-radius: 2px;
+    transition: width 0.3s ease-in-out;
+}
