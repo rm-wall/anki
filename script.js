@@ -774,7 +774,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         sessionCorrectCount = 0;
         sessionIncorrectCount = 0;
         sessionIncorrectCards = [];
-        reviewAgainPile = [];
+        // reviewAgainPile is no longer needed, sessionCards will be a dynamic queue
 
         setupEl.style.display = 'none';
         summaryEl.style.display = 'none';
@@ -824,8 +824,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     function displayNextCard() {
-        if (currentCardIndex < sessionCards.length) {
-            const currentCard = sessionCards[currentCardIndex];
+        if (sessionCards.length > 0) {
+            const currentCard = sessionCards[0]; // Look at the card at the front of the queue
             questionEl.textContent = currentCard.question;
             answerInput.value = '';
             setTimeout(() => answerInput.focus(), 0);
@@ -836,15 +836,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             const progress = Math.max(0, (currentCard.correctStreak || 0) / currentCard.sessionRequiredStreak);
             progressBar.style.width = `${progress * 100}%`;
         } else {
-            if (!isCramming && reviewAgainPile.length > 0) {
-                sessionCards = [...reviewAgainPile];
-                reviewAgainPile = [];
-                currentCardIndex = 0;
-                if (randomOrderCheckbox.checked) shuffle(sessionCards);
-                displayNextCard();
-            } else {
-                showSummary();
-            }
+            // The queue is empty, session is over
+            showSummary();
         }
     }
 
@@ -871,58 +864,61 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (userAnswer === '') return;
 
         isChecking = true;
-        const processedUserAnswer = userAnswer.replace(/\s/g, '').toLowerCase();
-        const currentCard = sessionCards[currentCardIndex];
-        const processedAnswers = currentCard.answers.map(a => a.replace(/\s/g, '').toLowerCase());
-
-        const penalty = parseInt(document.getElementById('penalty-input').value, 10) || 2;
         answerInput.disabled = true;
 
+        const currentCard = sessionCards[0]; // Peek at the card at the front
+        const processedUserAnswer = userAnswer.replace(/\s/g, '').toLowerCase();
+        const processedAnswers = currentCard.answers.map(a => a.replace(/\s/g, '').toLowerCase());
+        const penalty = parseInt(penaltyInput.value, 10) || 2;
+
         if (processedAnswers.includes(processedUserAnswer)) {
+            // --- CORRECT ANSWER ---
             isAnswerCorrect = true;
             currentCard.correctStreak = (currentCard.correctStreak || 0) + 1;
             
             const progress = Math.min(1, (currentCard.correctStreak || 0) / currentCard.sessionRequiredStreak);
             progressBar.style.width = `${progress * 100}%`;
 
+            await handleCorrectAnswer(currentCard);
+
+            // Now that it's correct, officially remove it from the front
+            sessionCards.shift(); 
+
+            // If not yet mastered for the session, put it at the back of the queue
             if (currentCard.correctStreak < currentCard.sessionRequiredStreak) {
-                if (!reviewAgainPile.some(c => c.question === currentCard.question)) {
-                    reviewAgainPile.push(currentCard);
-                }
-                await handleCorrectAnswer(currentCard);
-            } else {
-                // 从 reviewAgainPile 中移除（如果存在）
-                const indexInPile = reviewAgainPile.findIndex(c => c.question === currentCard.question);
-                if (indexInPile > -1) {
-                    reviewAgainPile.splice(indexInPile, 1);
-                }
-                await handleCorrectAnswer(currentCard);
+                sessionCards.push(currentCard);
             }
-            
+            // If mastered, it's "graduated" and we simply don't add it back.
+
+            // Show controls to proceed to the next card
             if (autoAdvanceCheckbox.checked) {
                 setTimeout(proceedToNextCard, 1500);
             } else {
                 continueButton.style.display = 'inline-block';
-                redoButton.style.display = 'inline-block';
+                redoButton.style.display = 'none'; // This button is confusing with the new queue logic
                 suspendButton.style.display = 'inline-block';
             }
         } else {
+            // --- INCORRECT ANSWER ---
             isAnswerCorrect = false;
             currentCard.sessionRequiredStreak += penalty;
-            // Note: correctStreak is no longer reset to 0, preserving some progress.
+            currentCard.correctStreak = 0; // Reset streak
+
             const progress = Math.max(0, (currentCard.correctStreak || 0) / currentCard.sessionRequiredStreak);
             progressBar.style.width = `${progress * 100}%`;
 
             await handleIncorrectAnswer(currentCard);
-            answerInput.disabled = false;
+
+            // The card stays at the front of the queue. Prepare for immediate retry.
             isChecking = false;
+            answerInput.disabled = false;
+            answerInput.value = '';
             answerInput.focus();
-            answerInput.select();
+            // Do NOT show the continue button. The user MUST re-answer the current card.
         }
     }
 
     function proceedToNextCard() {
-        currentCardIndex++;
         isChecking = false;
         isAnswerCorrect = false;
         feedbackEl.innerHTML = '&nbsp;';
@@ -931,7 +927,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         continueButton.style.display = 'none';
         redoButton.style.display = 'none';
         suspendButton.style.display = 'none';
-        displayNextCard();
+        displayNextCard(); // Directly display the next card in the queue
     }
 
     async function handleCorrectAnswer(card) {
@@ -940,9 +936,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         feedbackEl.className = 'correct';
         sessionCorrectCount++;
         if (!isCramming) {
-            // Only update SRS if the card is considered "mastered" in this session's context
-            const requiredStreak = parseInt(document.getElementById('required-streak-input').value, 10) || 2;
-            if (card.correctStreak >= requiredStreak) {
+            // Only update SRS if the card is considered "mastered" according to the main setting
+            if (card.correctStreak >= srsSettings.requiredStreak) {
                 await cardManager.update(card.question, true);
             }
         }
@@ -1369,245 +1364,246 @@ document.addEventListener('DOMContentLoaded', async () => {
         answerInput.focus();
     });
 
-    suspendButton.addEventListener('click', async () => {
-        const currentCard = sessionCards[currentCardIndex];
-        if (currentCard) {
-            await cardManager.suspend(currentCard.question);
-            proceedToNextCard();
-        }
-    });
-
-    continueButton.addEventListener('click', proceedToNextCard);
-    answerInput.addEventListener('keydown', (event) => {
-        if (event.key === 'Enter') {
-            event.stopPropagation();
-            checkAnswer();
-        }
-    });
-    restartButton.addEventListener('click', showSetup);
-    terminateButton.addEventListener('click', showSummary);
-
-    importFromTextareaButton.addEventListener('click', async () => {
-        await cardManager.syncFromTextarea();
-        
-        const lang = languageSelect.value;
-        const t = (key, fallback) => translations[lang][key] || fallback;
-
-        // Provide feedback
-        const originalText = t('syncButtonLabel', 'Sync');
-        importFromTextareaButton.textContent = t('syncSuccessLabel', 'Synced!');
-        importFromTextareaButton.disabled = true;
-        importFromTextareaButton.style.backgroundColor = '#34c759'; // Green for success
-
-        setTimeout(() => {
-            importFromTextareaButton.textContent = originalText;
-            importFromTextareaButton.disabled = false;
-            importFromTextareaButton.style.backgroundColor = ''; // Revert to original color from CSS
-        }, 2000);
-    });
-
-    const closeAllCardsModal = () => {
-        errorModal.style.display = 'none';
-        cardManager.updateDueCount();
-    };
-
-    closeModalButton.addEventListener('click', closeAllCardsModal);
-    window.addEventListener('click', (event) => {
-        if (event.target == errorModal) closeAllCardsModal();
-        if (event.target == settingsModal) settingsModal.style.display = 'none';
-    });
-    wordListInput.addEventListener('input', async () => {
-        localStorage.setItem(WORD_LIST_STORAGE_KEY, wordListInput.value);
-    });
-
-    modalIncorrectListEl.addEventListener('click', async (event) => {
-        const target = event.target;
-        const lang = languageSelect.value;
-        const t = (key, fallback) => translations[lang][key] || fallback;
-
-        if (target.matches('.tab-btn')) {
-            const activeViewBtn = modalIncorrectListEl.querySelector('.tab-btn[data-view].active');
-            const activeFilterBtn = modalIncorrectListEl.querySelector('.tab-btn[data-filter].active');
-
-            let viewType = activeViewBtn ? activeViewBtn.dataset.view : 'current';
-            let filterType = activeFilterBtn ? activeFilterBtn.dataset.filter : 'active';
-
-            if (target.dataset.view) viewType = target.dataset.view;
-            if (target.dataset.filter) filterType = target.dataset.filter;
-
-            renderAllCardsModal(viewType, filterType);
-
-        } else if (target.matches('.action-btn')) {
-            const scrollContainer = modalIncorrectListEl.querySelector('.table-scroll-container');
-            const previousScrollTop = scrollContainer ? scrollContainer.scrollTop : 0;
-
-            const action = target.dataset.action;
-            const cardId = target.dataset.cardId;
-            if (action === 'suspend') await cardManager.suspend(cardId);
-            else if (action === 'restore') await cardManager.restore(cardId);
-            else if (action === 'toggleStar') await cardManager.toggleStar(cardId);
-            else if (action === 'delete') {
-                if (confirm(t('confirmDeleteCard', 'Are you sure you want to permanently delete this card?'))) {
-                    await cardManager.deleteCard(cardId);
-                }
+        suspendButton.addEventListener('click', async () => {
+            const currentCard = sessionCards[0]; // Get the card at the front
+            if (currentCard) {
+                await cardManager.suspend(currentCard.question);
+                sessionCards.shift(); // Remove the suspended card from the queue
+                proceedToNextCard();
             }
-
-            const activeViewBtn = modalIncorrectListEl.querySelector('.tab-btn[data-view].active');
-            const activeFilterBtn = modalIncorrectListEl.querySelector('.tab-btn[data-filter].active');
-            renderAllCardsModal(
-                activeViewBtn ? activeViewBtn.dataset.view : 'current',
-                activeFilterBtn ? activeFilterBtn.dataset.filter : 'active'
-            );
-
-            const newScrollContainer = modalIncorrectListEl.querySelector('.table-scroll-container');
-            if (newScrollContainer) {
-                newScrollContainer.scrollTop = previousScrollTop;
-            }
-        }
-    });
-
-    starButton.addEventListener('click', async () => {
-        if (sessionCards.length > 0) {
-            const currentCard = sessionCards[currentCardIndex];
-            await cardManager.toggleStar(currentCard.question);
-            currentCard.isStarred = !currentCard.isStarred; // Manually sync the session card's state
-            starButton.textContent = currentCard.isStarred ? '★' : '☆';
-            starButton.classList.toggle('starred', currentCard.isStarred);
-            answerInput.focus();
-        }
-    });
-
-    fileDropZone.addEventListener('click', () => fileInput.click());
-    const containerEl = document.querySelector('.container');
-    ['dragover', 'dragleave', 'drop'].forEach(eventName => {
-        window.addEventListener(eventName, e => e.preventDefault());
-        if (containerEl) containerEl.addEventListener(eventName, e => e.preventDefault());
-    });
-    if (containerEl) {
-        containerEl.addEventListener('dragover', () => containerEl.classList.add('dragover'));
-        containerEl.addEventListener('dragleave', () => containerEl.classList.remove('dragover'));
-        containerEl.addEventListener('drop', (event) => {
-            containerEl.classList.remove('dragover');
-            if (event.dataTransfer.files.length > 0) handleFile(event.dataTransfer.files[0]);
         });
-    }
-    fileInput.addEventListener('change', (event) => {
-        if (event.target.files.length > 0) handleFile(event.target.files[0]);
-    });
-
-    errorModal.addEventListener('click', (event) => {
-        if (event.target.matches('#export-cards-button')) exportCards();
-        if (event.target.matches('#import-cards-button')) {
-            const importInput = errorModal.querySelector('#import-cards-input');
-            if (importInput) importInput.click();
-        }
-    });
-    errorModal.addEventListener('change', (event) => {
-        if (event.target.matches('#import-cards-input')) importCards(event);
-    });
-
-    settingsButton.addEventListener('click', () => {
-        populateSettingsModal();
-        settingsModal.style.display = 'flex';
-    });
-    settingsModalCloseButton.addEventListener('click', () => settingsModal.style.display = 'none');
-    saveSettingsButton.addEventListener('click', async () => {
-        await saveSettings();
-        settingsModal.style.display = 'none';
-    });
-    resetSettingsButton.addEventListener('click', async () => {
-        srsSettings = { ...defaultSrsSettings };
-        populateSettingsModal();
-        await saveSettings();
-    });
-    clearCacheButton.addEventListener('click', async () => {
-        if (confirm(translations[languageSelect.value].confirmClearCache)) {
-            try {
-                await dbManager.clearAllData();
-                alert(translations[languageSelect.value].cacheClearedAlert);
-                location.reload();
-            } catch (error) {
-                console.error("Failed to clear data:", error);
-                alert("Error clearing data. See console for details.");
+    
+        continueButton.addEventListener('click', proceedToNextCard);
+        answerInput.addEventListener('keydown', (event) => {
+            if (event.key === 'Enter') {
+                event.stopPropagation();
+                checkAnswer();
             }
-        }
-    });
-
-    document.addEventListener('keydown', (event) => {
-        if (errorModal.style.display === 'block' || settingsModal.style.display === 'flex') return;
-        if (event.key === 'Enter' && continueButton.style.display !== 'none') {
-            event.preventDefault();
-            if (isAnswerCorrect) proceedToNextCard();
-        }
-    });
-
-        // --- Initialization ---
-        async function init() {
-            const loadingOverlay = document.getElementById('loading-overlay');
-            try {
-                const savedLang = localStorage.getItem(LANGUAGE_STORAGE_KEY);
-                            const browserLang = navigator.language.split('-')[0];
-                            let initialLang = 'en';
-                
-                            if (savedLang && translations[savedLang]) initialLang = savedLang;
-                            else if (translations[navigator.language]) initialLang = navigator.language;
-                            else if (translations[browserLang]) initialLang = browserLang;
-                
-                            document.documentElement.lang = initialLang;
-                
-                            if (loadingOverlay) {
-                                loadingOverlay.textContent = translations[initialLang].dbInitializing;
-                            }                
-                errorModal.style.display = 'none';
-                settingsModal.style.display = 'none';
+        });
+        restartButton.addEventListener('click', showSetup);
+        terminateButton.addEventListener('click', showSummary);
     
-                await dbManager.init();
-                if (!dbManager.db) return; // Stop if DB failed to init
+        importFromTextareaButton.addEventListener('click', async () => {
+            await cardManager.syncFromTextarea();
+            
+            const lang = languageSelect.value;
+            const t = (key, fallback) => translations[lang][key] || fallback;
     
-                await loadSettings();
-                populateSettingsModal();
-                setupButtons();
+            // Provide feedback
+            const originalText = t('syncButtonLabel', 'Sync');
+            importFromTextareaButton.textContent = t('syncSuccessLabel', 'Synced!');
+            importFromTextareaButton.disabled = true;
+            importFromTextareaButton.style.backgroundColor = '#34c759'; // Green for success
     
-                const savedWordList = localStorage.getItem(WORD_LIST_STORAGE_KEY);
-                if (savedWordList) wordListInput.value = savedWordList;
-
-                const savedScope = localStorage.getItem(REVIEW_SCOPE_KEY);
-                if (savedScope === 'textarea') {
-                    scopeTextareaRadio.checked = true;
-                } else if (savedScope === 'starred') {
-                    scopeStarredRadio.checked = true;
-                } else {
-                    scopeAllRadio.checked = true;
+            setTimeout(() => {
+                importFromTextareaButton.textContent = originalText;
+                importFromTextareaButton.disabled = false;
+                importFromTextareaButton.style.backgroundColor = ''; // Revert to original color from CSS
+            }, 2000);
+        });
+    
+        const closeAllCardsModal = () => {
+            errorModal.style.display = 'none';
+            cardManager.updateDueCount();
+        };
+    
+        closeModalButton.addEventListener('click', closeAllCardsModal);
+        window.addEventListener('click', (event) => {
+            if (event.target == errorModal) closeAllCardsModal();
+            if (event.target == settingsModal) settingsModal.style.display = 'none';
+        });
+        wordListInput.addEventListener('input', async () => {
+            localStorage.setItem(WORD_LIST_STORAGE_KEY, wordListInput.value);
+        });
+    
+        modalIncorrectListEl.addEventListener('click', async (event) => {
+            const target = event.target;
+            const lang = languageSelect.value;
+            const t = (key, fallback) => translations[lang][key] || fallback;
+    
+            if (target.matches('.tab-btn')) {
+                const activeViewBtn = modalIncorrectListEl.querySelector('.tab-btn[data-view].active');
+                const activeFilterBtn = modalIncorrectListEl.querySelector('.tab-btn[data-filter].active');
+    
+                let viewType = activeViewBtn ? activeViewBtn.dataset.view : 'current';
+                let filterType = activeFilterBtn ? activeFilterBtn.dataset.filter : 'active';
+    
+                if (target.dataset.view) viewType = target.dataset.view;
+                if (target.dataset.filter) filterType = target.dataset.filter;
+    
+                renderAllCardsModal(viewType, filterType);
+    
+            } else if (target.matches('.action-btn')) {
+                const scrollContainer = modalIncorrectListEl.querySelector('.table-scroll-container');
+                const previousScrollTop = scrollContainer ? scrollContainer.scrollTop : 0;
+    
+                const action = target.dataset.action;
+                const cardId = target.dataset.cardId;
+                if (action === 'suspend') await cardManager.suspend(cardId);
+                else if (action === 'restore') await cardManager.restore(cardId);
+                else if (action === 'toggleStar') await cardManager.toggleStar(cardId);
+                else if (action === 'delete') {
+                    if (confirm(t('confirmDeleteCard', 'Are you sure you want to permanently delete this card?'))) {
+                        await cardManager.deleteCard(cardId);
+                    }
                 }
     
-                await setLanguage(initialLang);
-                await cardManager.load();
-                await cardManager.syncFromTextarea();
-                await showSetup();
+                const activeViewBtn = modalIncorrectListEl.querySelector('.tab-btn[data-view].active');
+                const activeFilterBtn = modalIncorrectListEl.querySelector('.tab-btn[data-filter].active');
+                renderAllCardsModal(
+                    activeViewBtn ? activeViewBtn.dataset.view : 'current',
+                    activeFilterBtn ? activeFilterBtn.dataset.filter : 'active'
+                );
     
-                scopeAllRadio.addEventListener('change', () => {
-                    localStorage.setItem(REVIEW_SCOPE_KEY, 'all');
-                    cardManager.updateDueCount();
-                });
-                scopeTextareaRadio.addEventListener('change', () => {
-                    localStorage.setItem(REVIEW_SCOPE_KEY, 'textarea');
-                    cardManager.updateDueCount();
-                });
-                scopeStarredRadio.addEventListener('change', () => {
-                    localStorage.setItem(REVIEW_SCOPE_KEY, 'starred');
-                    cardManager.updateDueCount();
-                });
-
-            } catch (error) {
-                console.error("Initialization failed:", error);
-                if (loadingOverlay) {
-                    loadingOverlay.textContent = "Error during initialization. Please refresh the page.";
-                }
-            } finally {
-                if (loadingOverlay) {
-                    loadingOverlay.style.display = 'none';
+                const newScrollContainer = modalIncorrectListEl.querySelector('.table-scroll-container');
+                if (newScrollContainer) {
+                    newScrollContainer.scrollTop = previousScrollTop;
                 }
             }
-        }            
-    init();
-});
+        });
+    
+        starButton.addEventListener('click', async () => {
+            if (sessionCards.length > 0) {
+                const currentCard = sessionCards[0]; // Card is at the front of the queue
+                await cardManager.toggleStar(currentCard.question);
+                currentCard.isStarred = !currentCard.isStarred; // Manually sync the session card's state
+                starButton.textContent = currentCard.isStarred ? '★' : '☆';
+                starButton.classList.toggle('starred', currentCard.isStarred);
+                answerInput.focus();
+            }
+        });
+    
+        fileDropZone.addEventListener('click', () => fileInput.click());
+        const containerEl = document.querySelector('.container');
+        ['dragover', 'dragleave', 'drop'].forEach(eventName => {
+            window.addEventListener(eventName, e => e.preventDefault());
+            if (containerEl) containerEl.addEventListener(eventName, e => e.preventDefault());
+        });
+        if (containerEl) {
+            containerEl.addEventListener('dragover', () => containerEl.classList.add('dragover'));
+            containerEl.addEventListener('dragleave', () => containerEl.classList.remove('dragover'));
+            containerEl.addEventListener('drop', (event) => {
+                containerEl.classList.remove('dragover');
+                if (event.dataTransfer.files.length > 0) handleFile(event.dataTransfer.files[0]);
+            });
+        }
+        fileInput.addEventListener('change', (event) => {
+            if (event.target.files.length > 0) handleFile(event.target.files[0]);
+        });
+    
+        errorModal.addEventListener('click', (event) => {
+            if (event.target.matches('#export-cards-button')) exportCards();
+            if (event.target.matches('#import-cards-button')) {
+                const importInput = errorModal.querySelector('#import-cards-input');
+                if (importInput) importInput.click();
+            }
+        });
+        errorModal.addEventListener('change', (event) => {
+            if (event.target.matches('#import-cards-input')) importCards(event);
+        });
+    
+        settingsButton.addEventListener('click', () => {
+            populateSettingsModal();
+            settingsModal.style.display = 'flex';
+        });
+        settingsModalCloseButton.addEventListener('click', () => settingsModal.style.display = 'none');
+        saveSettingsButton.addEventListener('click', async () => {
+            await saveSettings();
+            settingsModal.style.display = 'none';
+        });
+        resetSettingsButton.addEventListener('click', async () => {
+            srsSettings = { ...defaultSrsSettings };
+            populateSettingsModal();
+            await saveSettings();
+        });
+        clearCacheButton.addEventListener('click', async () => {
+            if (confirm(translations[languageSelect.value].confirmClearCache)) {
+                try {
+                    await dbManager.clearAllData();
+                    alert(translations[languageSelect.value].cacheClearedAlert);
+                    location.reload();
+                } catch (error) {
+                    console.error("Failed to clear data:", error);
+                    alert("Error clearing data. See console for details.");
+                }
+            }
+        });
+    
+        document.addEventListener('keydown', (event) => {
+            if (errorModal.style.display === 'block' || settingsModal.style.display === 'flex') return;
+            if (event.key === 'Enter' && continueButton.style.display !== 'none') {
+                event.preventDefault();
+                if (isAnswerCorrect) proceedToNextCard();
+            }
+        });
+    
+            // --- Initialization ---
+            async function init() {
+                const loadingOverlay = document.getElementById('loading-overlay');
+                try {
+                    const savedLang = localStorage.getItem(LANGUAGE_STORAGE_KEY);
+                                const browserLang = navigator.language.split('-')[0];
+                                let initialLang = 'en';
+                    
+                                if (savedLang && translations[savedLang]) initialLang = savedLang;
+                                else if (translations[navigator.language]) initialLang = navigator.language;
+                                else if (translations[browserLang]) initialLang = browserLang;
+                    
+                                document.documentElement.lang = initialLang;
+                    
+                                if (loadingOverlay) {
+                                    loadingOverlay.textContent = translations[initialLang].dbInitializing;
+                                }                
+                    errorModal.style.display = 'none';
+                    settingsModal.style.display = 'none';
+        
+                    await dbManager.init();
+                    if (!dbManager.db) return; // Stop if DB failed to init
+        
+                    await loadSettings();
+                    populateSettingsModal();
+                    setupButtons();
+        
+                    const savedWordList = localStorage.getItem(WORD_LIST_STORAGE_KEY);
+                    if (savedWordList) wordListInput.value = savedWordList;
+    
+                    const savedScope = localStorage.getItem(REVIEW_SCOPE_KEY);
+                    if (savedScope === 'textarea') {
+                        scopeTextareaRadio.checked = true;
+                    } else if (savedScope === 'starred') {
+                        scopeStarredRadio.checked = true;
+                    } else {
+                        scopeAllRadio.checked = true;
+                    }
+        
+                    await setLanguage(initialLang);
+                    await cardManager.load();
+                    await cardManager.syncFromTextarea();
+                    await showSetup();
+        
+                    scopeAllRadio.addEventListener('change', () => {
+                        localStorage.setItem(REVIEW_SCOPE_KEY, 'all');
+                        cardManager.updateDueCount();
+                    });
+                    scopeTextareaRadio.addEventListener('change', () => {
+                        localStorage.setItem(REVIEW_SCOPE_KEY, 'textarea');
+                        cardManager.updateDueCount();
+                    });
+                    scopeStarredRadio.addEventListener('change', () => {
+                        localStorage.setItem(REVIEW_SCOPE_KEY, 'starred');
+                        cardManager.updateDueCount();
+                    });
+    
+                } catch (error) {
+                    console.error("Initialization failed:", error);
+                    if (loadingOverlay) {
+                        loadingOverlay.textContent = "Error during initialization. Please refresh the page.";
+                    }
+                } finally {
+                    if (loadingOverlay) {
+                        loadingOverlay.style.display = 'none';
+                    }
+                }
+            }
+        init();
+    });
