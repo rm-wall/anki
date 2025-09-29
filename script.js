@@ -351,6 +351,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     let isAnswerCorrect = false;
     let isCramming = false;
     let allCards = new Map();
+    let cardOnDisplay = null;
     let lastCorrectlyAnsweredCard = null;
     let srsSettings = {};
     const defaultSrsSettings = {
@@ -826,17 +827,18 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     function displayNextCard() {
         if (sessionCards.length > 0) {
-            const currentCard = sessionCards[0]; // Look at the card at the front of the queue
-            questionEl.textContent = currentCard.question;
+            cardOnDisplay = sessionCards[0]; // Look at the card at the front of the queue
+            questionEl.textContent = cardOnDisplay.question;
             answerInput.value = '';
             setTimeout(() => answerInput.focus(), 0);
 
-            starButton.textContent = currentCard.isStarred ? '★' : '☆';
-            starButton.classList.toggle('starred', currentCard.isStarred);
+            starButton.textContent = cardOnDisplay.isStarred ? '★' : '☆';
+            starButton.classList.toggle('starred', cardOnDisplay.isStarred);
 
-            const progress = Math.max(0, (currentCard.correctStreak || 0) / currentCard.sessionRequiredStreak);
+            const progress = Math.max(0, (cardOnDisplay.correctStreak || 0) / cardOnDisplay.sessionRequiredStreak);
             progressBar.style.width = `${progress * 100}%`;
         } else {
+            cardOnDisplay = null; // Clear the displayed card when the session is over
             // The queue is empty, session is over
             showSummary();
         }
@@ -867,7 +869,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         isChecking = true;
         answerInput.disabled = true;
 
-        const currentCard = sessionCards[0]; // Peek at the card at the front
+        const currentCard = cardOnDisplay; // Use the card that is currently on display
         const processedUserAnswer = userAnswer.replace(/\s/g, '').toLowerCase();
         const processedAnswers = currentCard.answers.map(a => a.replace(/\s/g, '').toLowerCase());
         const penalty = parseInt(penaltyInput.value, 10) || 2;
@@ -1377,10 +1379,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
 
         suspendButton.addEventListener('click', async () => {
-            const currentCard = sessionCards[0]; // Get the card at the front
+            const currentCard = cardOnDisplay; // Get the card that is currently on display
             if (currentCard) {
                 await cardManager.suspend(currentCard.question);
-                sessionCards.shift(); // Remove the suspended card from the queue
+                // Remove the suspended card from the session queue
+                sessionCards = sessionCards.filter(card => card.question !== currentCard.question);
                 proceedToNextCard();
             }
         });
@@ -1475,12 +1478,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     
         starButton.addEventListener('click', async () => {
-            if (sessionCards.length > 0) {
-                const currentCard = sessionCards[0]; // Card is at the front of the queue
-                await cardManager.toggleStar(currentCard.question);
-                currentCard.isStarred = !currentCard.isStarred; // Manually sync the session card's state
-                starButton.textContent = currentCard.isStarred ? '★' : '☆';
-                starButton.classList.toggle('starred', currentCard.isStarred);
+            if (cardOnDisplay) { // Use the card that is currently on display
+                await cardManager.toggleStar(cardOnDisplay.question);
+                cardOnDisplay.isStarred = !cardOnDisplay.isStarred; // Manually sync the session card's state
+                starButton.textContent = cardOnDisplay.isStarred ? '★' : '☆';
+                starButton.classList.toggle('starred', cardOnDisplay.isStarred);
                 answerInput.focus();
             }
         });
