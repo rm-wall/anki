@@ -88,7 +88,9 @@ const translations = {
         scopeStarredLabel: '星标单词',
         starredCards: '星标卡片',
         deleteButtonLabel: '删除',
-        confirmDeleteCard: '确定要永久删除这张卡片吗？此操作不可撤销。'
+        confirmDeleteCard: '确定要永久删除这张卡片吗？此操作不可撤销。',
+        requiredStreakLabel: '掌握所需连对次数',
+        penaltyLabel: '答错扣除连对次数'
     },
     'en': {
         title: 'Anki Program',
@@ -163,7 +165,7 @@ const translations = {
         confirmImport: 'Are you sure you want to import a new word list? This will only add new cards from the file that do not already exist and will not affect the list in the textarea.',
         importSuccess: 'Word list imported successfully! {count} new cards have been added.',
         importFailed: 'Import failed. Please ensure the file is a plain text file.',
-        dbInitializing: 'Initializing Database...',
+        dbInitializing: 'Initializing Database...', 
         totalWordsLabel: 'Total: {count}',
         newWordsLabel: 'New: {count}',
         learnedWordsLabel: 'Learned: {count}',
@@ -178,7 +180,9 @@ const translations = {
         scopeStarredLabel: 'Starred Words',
         starredCards: 'Starred Cards',
         deleteButtonLabel: 'Delete',
-        confirmDeleteCard: 'Are you sure you want to permanently delete this card? This action cannot be undone.'
+        confirmDeleteCard: 'Are you sure you want to permanently delete this card? This action cannot be undone.',
+        requiredStreakLabel: 'Required Streak',
+        penaltyLabel: 'Incorrect Penalty'
     },
     'ja': {
         title: '暗記プログラム',
@@ -268,7 +272,9 @@ const translations = {
         scopeStarredLabel: 'スター付き単語',
         starredCards: 'スター付きカード',
         deleteButtonLabel: '削除',
-        confirmDeleteCard: 'このカードを完全に削除してもよろしいですか？この操作は元に戻せません。'
+        confirmDeleteCard: 'このカードを完全に削除してもよろしいですか？この操作は元に戻せません。',
+        requiredStreakLabel: '習得に必要な連続正解数',
+        penaltyLabel: '不正解時のペナルティ'
     }
 };
 document.addEventListener('DOMContentLoaded', async () => {
@@ -750,7 +756,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         if (randomOrderCheckbox.checked) shuffle(cards);
 
-        sessionCards = cards;
+        sessionCards = cards.map(card => ({ ...card, correctStreak: 0 }));
         currentCardIndex = 0;
         sessionCorrectCount = 0;
         sessionIncorrectCount = 0;
@@ -853,11 +859,29 @@ document.addEventListener('DOMContentLoaded', async () => {
         const currentCard = sessionCards[currentCardIndex];
         const processedAnswers = currentCard.answers.map(a => a.replace(/\s/g, '').toLowerCase());
 
+        const requiredStreak = parseInt(document.getElementById('required-streak-input').value, 10) || 2;
+        const penalty = parseInt(document.getElementById('penalty-input').value, 10) || 2;
+
         answerInput.disabled = true;
 
         if (processedAnswers.includes(processedUserAnswer)) {
             isAnswerCorrect = true;
-            await handleCorrectAnswer(currentCard);
+            currentCard.correctStreak = (currentCard.correctStreak || 0) + 1;
+
+            if (currentCard.correctStreak < requiredStreak) {
+                if (!reviewAgainPile.some(c => c.question === currentCard.question)) {
+                    reviewAgainPile.push(currentCard);
+                }
+                await handleCorrectAnswer(currentCard, ` (连对 ${currentCard.correctStreak}/${requiredStreak})`);
+            } else {
+                // 从 reviewAgainPile 中移除（如果存在）
+                const indexInPile = reviewAgainPile.findIndex(c => c.question === currentCard.question);
+                if (indexInPile > -1) {
+                    reviewAgainPile.splice(indexInPile, 1);
+                }
+                await handleCorrectAnswer(currentCard, ' (已掌握!)');
+            }
+            
             if (autoAdvanceCheckbox.checked) {
                 setTimeout(proceedToNextCard, 1500);
             } else {
@@ -868,6 +892,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             answerInput.blur();
         } else {
             isAnswerCorrect = false;
+            currentCard.correctStreak = (currentCard.correctStreak || 0) - penalty;
             await handleIncorrectAnswer(currentCard);
             continueButton.style.display = 'inline-block';
             answerInput.disabled = false;
@@ -890,13 +915,17 @@ document.addEventListener('DOMContentLoaded', async () => {
         displayNextCard();
     }
 
-    async function handleCorrectAnswer(card) {
+    async function handleCorrectAnswer(card, statusText = '') {
         const feedbackText = translations[languageSelect.value].correctFeedback;
-        feedbackEl.textContent = feedbackText.replace('{answers}', card.answers.join(' / '));
+        feedbackEl.textContent = feedbackText.replace('{answers}', card.answers.join(' / ')) + statusText;
         feedbackEl.className = 'correct';
         sessionCorrectCount++;
         if (!isCramming) {
-            await cardManager.update(card.question, true);
+            // Only update SRS if the card is considered "mastered" in this session's context
+            const requiredStreak = parseInt(document.getElementById('required-streak-input').value, 10) || 2;
+            if (card.correctStreak >= requiredStreak) {
+                await cardManager.update(card.question, true);
+            }
         }
     }
 

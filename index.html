@@ -114,6 +114,18 @@
             <h2 data-i18n="settingsModalHeading">算法参数设置</h2>
             <div class="settings-form">
                 <div class="settings-form-group">
+                    <label for="required-streak-input" data-i18n="requiredStreakLabel">掌握所需连对次数</label>
+                    <div class="input-group">
+                        <input type="number" id="required-streak-input" value="2" min="1">
+                    </div>
+                </div>
+                <div class="settings-form-group">
+                    <label for="penalty-input" data-i18n="penaltyLabel">答错扣除连对次数</label>
+                    <div class="input-group">
+                        <input type="number" id="penalty-input" value="2" min="0">
+                    </div>
+                </div>
+                <div class="settings-form-group">
                     <label for="setting-initial-interval-value" data-i18n="initialIntervalLabel">初次答对后间隔</label>
                     <div class="input-group">
                         <input type="number" id="setting-initial-interval-value" min="1">
