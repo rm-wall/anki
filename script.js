@@ -1439,6 +1439,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             currentCard.isStarred = !currentCard.isStarred; // Manually sync the session card's state
             starButton.textContent = currentCard.isStarred ? '★' : '☆';
             starButton.classList.toggle('starred', currentCard.isStarred);
+            answerInput.focus();
         }
     });
 
