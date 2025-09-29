@@ -230,12 +230,18 @@ button:disabled {
 
 #continue-button {
     background-color: #34c759; /* Green for continue */
-    margin-top: 10px;
-    margin-right: 10px; /* Space between buttons */
 }
 
 #continue-button:hover {
     background-color: #2ca349;
+}
+
+#suspend-button {
+    background-color: #ff9500; /* Orange for suspend */
+}
+
+#suspend-button:hover {
+    background-color: #e08500;
 }
 
 

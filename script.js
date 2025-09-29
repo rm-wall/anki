@@ -35,6 +35,7 @@ const translations = {
         noDueCards: '今日无待复习卡片！',
         noCardsToCram: '没有可供自由复习的卡片。',
         autoAdvanceLabel: '自动跳到下一题',
+        suspendButton: '暂停',
         cardQuestion: '问题',
         cardAnswers: '答案',
         cardNextReview: '下次复习',
@@ -121,6 +122,7 @@ const translations = {
         noDueCards: 'No cards due for review today!',
         noCardsToCram: 'There are no cards available to cram.',
         autoAdvanceLabel: 'Auto-advance to next question',
+        suspendButton: 'Suspend',
         cardQuestion: 'Question',
         cardAnswers: 'Answers',
         cardNextReview: 'Next Review',
@@ -207,6 +209,7 @@ const translations = {
         noDueCards: '今日レビューするカードはありません！',
         noCardsToCram: '集中学習できるカードがありません。',
         autoAdvanceLabel: '正解の場合、自動的に次に進む',
+        suspendButton: '一時停止',
         cardQuestion: '問題',
         cardAnswers: '答え',
         cardNextReview: '次回レビュー',
@@ -308,6 +311,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const scopeTextareaRadio = document.getElementById('scope-textarea');
     const scopeStarredRadio = document.getElementById('scope-starred');
     const starButton = document.getElementById('star-button');
+    const suspendButton = document.getElementById('suspend-button');
 
     let cramButton;
 
@@ -809,6 +813,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             } else {
                 continueButton.style.display = 'inline-block';
                 redoButton.style.display = 'inline-block';
+                suspendButton.style.display = 'inline-block';
             }
             answerInput.blur();
         } else {
@@ -831,6 +836,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         answerInput.disabled = false;
         continueButton.style.display = 'none';
         redoButton.style.display = 'none';
+        suspendButton.style.display = 'none';
         displayNextCard();
     }
 
@@ -1232,6 +1238,14 @@ document.addEventListener('DOMContentLoaded', async () => {
         isChecking = false;
         isAnswerCorrect = false;
         answerInput.focus();
+    });
+
+    suspendButton.addEventListener('click', async () => {
+        const currentCard = sessionCards[currentCardIndex];
+        if (currentCard) {
+            await cardManager.suspend(currentCard.question);
+            proceedToNextCard();
+        }
     });
 
     continueButton.addEventListener('click', proceedToNextCard);
