@@ -915,7 +915,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             // The card stays at the front of the queue. Prepare for immediate retry.
             isChecking = false;
             answerInput.disabled = false;
-            answerInput.value = '';
+            // answerInput.value = '';
             answerInput.focus();
             // Do NOT show the continue button. The user MUST re-answer the current card.
         }
