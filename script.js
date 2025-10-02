@@ -862,7 +862,18 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // --- Answer Checking ---
     async function checkAnswer() {
-        if (isChecking) return;
+        console.log('checkAnswer called:', {
+            inputValue: answerInput.value,
+            currentCard: cardOnDisplay,
+            isChecking: isChecking,
+            autoAdvance: autoAdvanceCheckbox.checked,
+            timestamp: new Date().toISOString()
+        });
+
+        if (isChecking) {
+            console.log('checkAnswer aborted: already checking');
+            return;
+        }
         const userAnswer = answerInput.value.trim();
         if (userAnswer === '') return;
 
@@ -922,6 +933,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     function proceedToNextCard() {
+        console.log('proceedToNextCard called:', {
+            currentCardIndex: currentCardIndex,
+            sessionCardsLength: sessionCards.length,
+            isChecking: isChecking,
+            isAnswerCorrect: isAnswerCorrect,
+            autoAdvance: autoAdvanceCheckbox.checked,
+            timestamp: new Date().toISOString()
+        });
+
         isChecking = false;
         isAnswerCorrect = false;
         feedbackEl.innerHTML = '&nbsp;';
@@ -1389,6 +1409,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     
         continueButton.addEventListener('click', proceedToNextCard);
         answerInput.addEventListener('keydown', (event) => {
+            console.log('answerInput keydown:', {
+                key: event.key,
+                isChecking: isChecking,
+                isAnswerCorrect: isAnswerCorrect,
+                disabled: answerInput.disabled,
+                autoAdvance: autoAdvanceCheckbox.checked,
+                timestamp: new Date().toISOString()
+            });
+
             if (event.key === 'Enter') {
                 event.stopPropagation();
                 checkAnswer();
@@ -1543,6 +1572,14 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     
         document.addEventListener('keydown', (event) => {
+            console.log('document keydown:', {
+                key: event.key,
+                continueButtonVisible: continueButton.style.display !== 'none',
+                isAnswerCorrect: isAnswerCorrect,
+                modalOpen: errorModal.style.display === 'block' || settingsModal.style.display === 'flex',
+                timestamp: new Date().toISOString()
+            });
+
             if (errorModal.style.display === 'block' || settingsModal.style.display === 'flex') return;
             if (event.key === 'Enter' && continueButton.style.display !== 'none') {
                 event.preventDefault();
