@@ -22,14 +22,13 @@
 
         <div id="setup">
             <h2 data-i18n="listHeading">输入单词列表</h2>
-            <p data-i18n="instructions">每行一个词条，格式为：<b>问题, 答案1, 答案2...</b>，例如：</p>
-            <p><code>桜,さくら,sakura</code></p>
+            <p data-i18n="instructions" class="compact-instructions">格式：<b>问题, 答案1, 答案2...</b></p>
             <div id="file-drop-zone">
                 <p data-i18n="dropZoneLabel">将文件拖放到此处，或点击选择文件</p>
                 <input type="file" id="file-input" accept=".txt,.csv" style="display: none;">
             </div>
             <div class="textarea-container">
-                <textarea id="word-list-input" rows="10">桜,さくら,sakura
+                <textarea id="word-list-input" rows="15">桜,さくら,sakura
 車,くるま,kuruma
 猫,ねこ,neko
 犬,いぬ,inu
