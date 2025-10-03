@@ -291,6 +291,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const languageSelect = document.getElementById('language-select');
     const questionEl = document.getElementById('question');
     const answerInput = document.getElementById('answer-input');
+    const answerHint = document.getElementById('answer-hint');
     const feedbackEl = document.getElementById('feedback');
     const startButton = document.getElementById('start-button');
 
@@ -848,6 +849,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             questionEl.textContent = cardOnDisplay.question;
             answerInput.value = '';
             answerInput.style.height = 'auto'; // Reset textarea height
+            answerHint.style.visibility = 'visible'; // Show hint for new card
             setTimeout(() => answerInput.focus(), 0);
 
             starButton.textContent = cardOnDisplay.isStarred ? '★' : '☆';
@@ -1435,6 +1437,13 @@ document.addEventListener('DOMContentLoaded', async () => {
         function autoResizeTextarea() {
             answerInput.style.height = 'auto';
             answerInput.style.height = Math.min(answerInput.scrollHeight, 200) + 'px';
+
+            // Hide hint when user starts typing, show when empty
+            if (answerInput.value.trim() === '') {
+                answerHint.style.visibility = 'visible';
+            } else {
+                answerHint.style.visibility = 'hidden';
+            }
         }
 
         answerInput.addEventListener('input', autoResizeTextarea);

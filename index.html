@@ -78,7 +78,10 @@
             <div id="progress-bar-container">
                 <div id="progress-bar"></div>
             </div>
-            <textarea id="answer-input" data-i18n-placeholder="answerPlaceholder" placeholder="输入答案后按回车" autocomplete="off" rows="1"></textarea>
+            <div class="answer-input-container">
+                <textarea id="answer-input" placeholder="" autocomplete="off" rows="1"></textarea>
+                <div id="answer-hint" data-i18n="answerPlaceholder">输入答案后按回车</div>
+            </div>
             <div id="feedback"></div>
             <div class="auto-advance-option">
                 <input type="checkbox" id="auto-advance-checkbox">
