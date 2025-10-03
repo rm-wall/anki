@@ -1703,7 +1703,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
                         // Calculate how much space the textarea can expand into
                         const textareaCurrentBottom = textareaRect.bottom;
-                        const expandableSpace = footerTop - textareaCurrentBottom - 40; // 40px buffer
+                        const expandableSpace = footerTop - textareaCurrentBottom - 60; // 60px buffer (20px body padding + 40px spacing)
 
                         if (expandableSpace > 0) {
                             const currentHeight = wordListInput.offsetHeight;
