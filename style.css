@@ -607,6 +607,7 @@ button:disabled {
     font-size: 1.5rem;
     color: #ccc;
     opacity: 1; /* Override Firefox's default opacity */
+    text-align: center;
 }
 
 /* --- Cram Button Style --- */
