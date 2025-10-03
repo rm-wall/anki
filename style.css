@@ -236,7 +236,7 @@ button:disabled {
     display: flex;
     flex-wrap: wrap;
     gap: 8px;
-    align-items: baseline;
+    align-items: center;
     width: 100%;
     box-sizing: border-box;
     justify-content: center;
