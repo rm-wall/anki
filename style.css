@@ -127,6 +127,8 @@ h2 {
     border-radius: 8px;
     resize: vertical; /* Allow vertical resizing */
     margin-bottom: 15px;
+    min-height: 200px;
+    max-height: 70vh;
 }
 
 .textarea-container {

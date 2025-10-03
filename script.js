@@ -1684,7 +1684,41 @@ document.addEventListener('DOMContentLoaded', async () => {
                         localStorage.setItem(REVIEW_SCOPE_KEY, 'starred');
                         cardManager.updateDueCount();
                     });
-    
+
+                    // Dynamic textarea height calculation
+                    function adjustTextareaHeight() {
+                        const container = document.querySelector('.container');
+                        const footer = document.getElementById('last-updated');
+
+                        if (!container || !footer || !wordListInput) return;
+
+                        const containerRect = container.getBoundingClientRect();
+                        const textareaRect = wordListInput.getBoundingClientRect();
+                        const footerRect = footer.getBoundingClientRect();
+
+                        // Calculate available space: from bottom of container to top of footer
+                        const containerBottom = containerRect.bottom;
+                        const footerTop = footerRect.top;
+                        const availableSpace = footerTop - containerBottom;
+
+                        // Calculate how much space the textarea can expand into
+                        const textareaCurrentBottom = textareaRect.bottom;
+                        const expandableSpace = footerTop - textareaCurrentBottom - 40; // 40px buffer
+
+                        if (expandableSpace > 0) {
+                            const currentHeight = wordListInput.offsetHeight;
+                            const newHeight = currentHeight + expandableSpace;
+                            const minHeight = 200;
+                            const maxHeight = window.innerHeight * 0.7;
+
+                            wordListInput.style.height = Math.max(minHeight, Math.min(newHeight, maxHeight)) + 'px';
+                        }
+                    }
+
+                    // Adjust on load and window resize
+                    setTimeout(adjustTextareaHeight, 100);
+                    window.addEventListener('resize', adjustTextareaHeight);
+
                 } catch (error) {
                     console.error("Initialization failed:", error);
                     if (loadingOverlay) {
