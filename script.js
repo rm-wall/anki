@@ -1694,8 +1694,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                         const textareaRect = wordListInput.getBoundingClientRect();
                         const viewportHeight = window.innerHeight;
 
-                        // Calculate where we want the footer to be (bottom of viewport - 20px body padding)
-                        const targetFooterPosition = viewportHeight - 20;
+                        // Calculate where we want the footer to be (bottom of viewport - 10px body padding)
+                        const targetFooterPosition = viewportHeight - 10;
 
                         // Calculate current footer position
                         const footerRect = footer.getBoundingClientRect();
