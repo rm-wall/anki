@@ -233,11 +233,13 @@ button:disabled {
     border-radius: 8px;
     padding: 10px 15px;
     margin: 15px 0 0; /* No longer centered */
-    display: inline-flex; /* Use inline-flex to shrink-wrap content */
+    display: flex;
     flex-wrap: wrap;
     gap: 8px;
     align-items: baseline;
-    /* justify-content: center; is removed */
+    width: 100%;
+    box-sizing: border-box;
+    justify-content: center;
 }
 
 .option-separator {
