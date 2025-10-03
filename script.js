@@ -1686,10 +1686,11 @@ document.addEventListener('DOMContentLoaded', async () => {
                     });
 
                     // Dynamic textarea height calculation based on viewport
-                    function adjustTextareaHeight() {
+                    function adjustTextareaHeight(showContainer = false) {
                         const footer = document.getElementById('last-updated');
+                        const container = document.querySelector('.container');
 
-                        if (!footer || !wordListInput) return;
+                        if (!footer || !wordListInput || !container) return;
 
                         const textareaRect = wordListInput.getBoundingClientRect();
                         const viewportHeight = window.innerHeight;
@@ -1712,11 +1713,18 @@ document.addEventListener('DOMContentLoaded', async () => {
 
                             wordListInput.style.height = Math.max(minHeight, Math.min(newHeight, maxHeight)) + 'px';
                         }
+
+                        // Show container after height calculation
+                        if (showContainer) {
+                            requestAnimationFrame(() => {
+                                container.classList.add('loaded');
+                            });
+                        }
                     }
 
                     // Adjust on load and window resize
-                    setTimeout(adjustTextareaHeight, 150);
-                    window.addEventListener('resize', adjustTextareaHeight);
+                    setTimeout(() => adjustTextareaHeight(true), 100);
+                    window.addEventListener('resize', () => adjustTextareaHeight(false));
 
                 } catch (error) {
                     console.error("Initialization failed:", error);
