@@ -235,7 +235,7 @@ button:disabled {
     margin: 15px 0 0; /* No longer centered */
     display: inline-flex; /* Use inline-flex to shrink-wrap content */
     flex-wrap: wrap;
-    gap: 15px;
+    gap: 8px;
     align-items: baseline;
     /* justify-content: center; is removed */
 }
@@ -256,6 +256,11 @@ button:disabled {
     display: flex;
     align-items: center;
     gap: 5px;
+    white-space: nowrap;
+}
+
+.order-option label, .review-scope-option label {
+    font-size: 0.95em;
 }
 
 
