@@ -1,27 +1,68 @@
 # Anki Clone
 
-This is a simple, client-side flashcard application inspired by Anki. It helps users memorize words or phrases using spaced repetition.
+A lightweight, client-side flashcard application inspired by Anki, designed to help you memorize words and phrases using spaced repetition algorithms.
 
-## Features
+**🌐 [Live Demo](https://rm-wall.github.io/anki/)**
 
-- **Spaced Repetition:** The application uses a simplified spaced repetition algorithm to schedule card reviews.
-- **Bilingual Support:** The interface supports English, Chinese, and Japanese.
-- **Import/Export:** Users can import and export their word lists as plain text files.
-- **Flexible Review Options:** Users can choose to review all cards or only the cards in the current list, in random or sequential order.
-- **Client-Side Storage:** All data is stored locally in the user's browser using SQL.js and IndexedDB. No server is required.
+## ✨ Features
 
-## How to Use
+- 🧠 **Spaced Repetition Algorithm** - Intelligent scheduling to optimize your learning
+- 🌍 **Multi-language Interface** - Supports English, Chinese, and Japanese
+- 📥 **Import/Export** - Easy data management with plain text file support
+- 🎯 **Smart Review Modes**
+  - Smart Review: Study cards that are due for review
+  - Cram Session: Study any card at any time
+  - Random or sequential order options
+- 💾 **100% Client-Side** - All data stored locally using SQL.js and IndexedDB
+- 🔒 **Privacy First** - No server required, your data never leaves your device
+- ⚡ **Lightweight & Fast** - Pure vanilla JavaScript, no heavy frameworks
 
-1.  Open the `index.html` file in a web browser.
-2.  Enter your word list in the text area. The format is `Question,Answer1,Answer2,...` on each line.
-3.  Click "Smart Review" to study cards that are due, or "Cram Session" to study any card.
-4.  During a session, type your answer and press Enter.
-5.  The application will show you if you were correct and schedule the next review.
+## 🚀 Quick Start
 
-## Technologies Used
+### Online
+Visit the [Live Demo](https://rm-wall.github.io/anki/) and start learning immediately!
 
--   HTML5
--   CSS3
--   JavaScript (ES6+)
--   **SQL.js:** for the SQLite database engine.
--   **IndexedDB:** for persisting the SQLite database in the browser.
+### Local
+1. Clone or download this repository
+2. Open `index.html` in your web browser
+3. Start adding your flashcards!
+
+## 📖 How to Use
+
+1. **Add Cards**: Enter your word list in the text area using the format:
+   ```
+   Question,Answer1,Answer2,...
+   ```
+   Example:
+   ```
+   Hello,你好,こんにちは
+   Goodbye,再见,さようなら
+   ```
+
+2. **Start Learning**:
+   - Click **"Smart Review"** to study cards that are due for review
+   - Click **"Cram Session"** to study any card regardless of schedule
+
+3. **Answer Cards**:
+   - Type your answer in the input field
+   - Press **Enter** to submit
+   - The app will show if you're correct and schedule the next review automatically
+
+4. **Manage Data**:
+   - Use **Import/Export** buttons to backup or share your word lists
+
+## 🛠️ Technologies
+
+- **HTML5** - Semantic markup
+- **CSS3** - Modern styling
+- **JavaScript (ES6+)** - Vanilla JS, no frameworks
+- **SQL.js** - SQLite database engine in the browser
+- **IndexedDB** - Persistent storage for offline functionality
+
+## 📄 License
+
+This project is open source and available under the MIT License.
+
+## 🤝 Contributing
+
+Contributions, issues, and feature requests are welcome!
