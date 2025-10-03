@@ -787,6 +787,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         sessionIncorrectCards = [];
         // reviewAgainPile is no longer needed, sessionCards will be a dynamic queue
 
+        // Reset checking state when starting a new session
+        isChecking = false;
+        isAnswerCorrect = false;
+
         setupEl.style.display = 'none';
         summaryEl.style.display = 'none';
         cardEl.style.display = 'block';
@@ -835,6 +839,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     function displayNextCard() {
+        // Reset checking state for the new card
+        isChecking = false;
+        isAnswerCorrect = false;
+
         if (sessionCards.length > 0) {
             cardOnDisplay = sessionCards[0]; // Look at the card at the front of the queue
             questionEl.textContent = cardOnDisplay.question;
@@ -854,6 +862,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     async function showSummary() {
+        // Reset checking state when ending session
+        isChecking = false;
+        isAnswerCorrect = false;
+
         correctCountEl.textContent = sessionCorrectCount;
         incorrectCountEl.textContent = sessionIncorrectCount;
         cardEl.style.display = 'none';
