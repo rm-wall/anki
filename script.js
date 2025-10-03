@@ -293,6 +293,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     const answerInput = document.getElementById('answer-input');
     const feedbackEl = document.getElementById('feedback');
     const startButton = document.getElementById('start-button');
+
+    const randomOrderCheckbox = document.getElementById('random-order-checkbox');
+    const savedRandomOrder = localStorage.getItem('randomOrder');
+    if (savedRandomOrder !== null) {
+        randomOrderCheckbox.checked = savedRandomOrder === 'true';
+    }
+    randomOrderCheckbox.addEventListener('change', () => {
+        localStorage.setItem('randomOrder', randomOrderCheckbox.checked);
+    });
+
     const wordListInput = document.getElementById('word-list-input');
     const restartButton = document.getElementById('restart-button');
     const terminateButton = document.getElementById('terminate-button');
@@ -300,7 +310,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     const clearCacheButton = document.getElementById('clear-cache-button');
     const continueButton = document.getElementById('continue-button');
     const redoButton = document.getElementById('redo-button');
-    const randomOrderCheckbox = document.getElementById('random-order-checkbox');
     const fileDropZone = document.getElementById('file-drop-zone');
     const fileInput = document.getElementById('file-input');
     const autoAdvanceCheckbox = document.getElementById('auto-advance-checkbox');
