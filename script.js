@@ -1685,38 +1685,37 @@ document.addEventListener('DOMContentLoaded', async () => {
                         cardManager.updateDueCount();
                     });
 
-                    // Dynamic textarea height calculation
+                    // Dynamic textarea height calculation based on viewport
                     function adjustTextareaHeight() {
-                        const container = document.querySelector('.container');
                         const footer = document.getElementById('last-updated');
 
-                        if (!container || !footer || !wordListInput) return;
+                        if (!footer || !wordListInput) return;
 
-                        const containerRect = container.getBoundingClientRect();
                         const textareaRect = wordListInput.getBoundingClientRect();
+                        const viewportHeight = window.innerHeight;
+
+                        // Calculate where we want the footer to be (bottom of viewport - 20px body padding)
+                        const targetFooterPosition = viewportHeight - 20;
+
+                        // Calculate current footer position
                         const footerRect = footer.getBoundingClientRect();
+                        const currentFooterTop = footerRect.top;
 
-                        // Calculate available space: from bottom of container to top of footer
-                        const containerBottom = containerRect.bottom;
-                        const footerTop = footerRect.top;
-                        const availableSpace = footerTop - containerBottom;
+                        // Calculate how much space the textarea can expand
+                        const expandableSpace = targetFooterPosition - currentFooterTop - footer.offsetHeight;
 
-                        // Calculate how much space the textarea can expand into
-                        const textareaCurrentBottom = textareaRect.bottom;
-                        const expandableSpace = footerTop - textareaCurrentBottom - 60; // 60px buffer (20px body padding + 40px spacing)
-
-                        if (expandableSpace > 0) {
+                        if (expandableSpace > 5) { // Only expand if there's more than 5px space
                             const currentHeight = wordListInput.offsetHeight;
                             const newHeight = currentHeight + expandableSpace;
                             const minHeight = 200;
-                            const maxHeight = window.innerHeight * 0.7;
+                            const maxHeight = viewportHeight * 0.7;
 
                             wordListInput.style.height = Math.max(minHeight, Math.min(newHeight, maxHeight)) + 'px';
                         }
                     }
 
                     // Adjust on load and window resize
-                    setTimeout(adjustTextareaHeight, 100);
+                    setTimeout(adjustTextareaHeight, 150);
                     window.addEventListener('resize', adjustTextareaHeight);
 
                 } catch (error) {
