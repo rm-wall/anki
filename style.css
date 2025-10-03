@@ -166,13 +166,6 @@ h1 {
     box-shadow: 0 0 0 4px #007aff;
 }
 
-.order-option {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-bottom: 15px;
-}
-
 #feedback {
     margin-top: 15px;
     min-height: 2.8rem; /* Approximately two lines of text */
