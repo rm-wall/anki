@@ -847,6 +847,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             cardOnDisplay = sessionCards[0]; // Look at the card at the front of the queue
             questionEl.textContent = cardOnDisplay.question;
             answerInput.value = '';
+            answerInput.style.height = 'auto'; // Reset textarea height
             setTimeout(() => answerInput.focus(), 0);
 
             starButton.textContent = cardOnDisplay.isStarred ? '★' : '☆';
@@ -1429,6 +1430,15 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     
         continueButton.addEventListener('click', proceedToNextCard);
+
+        // Auto-resize textarea based on content
+        function autoResizeTextarea() {
+            answerInput.style.height = 'auto';
+            answerInput.style.height = Math.min(answerInput.scrollHeight, 200) + 'px';
+        }
+
+        answerInput.addEventListener('input', autoResizeTextarea);
+
         answerInput.addEventListener('keydown', (event) => {
             console.log('answerInput keydown:', {
                 key: event.key,
@@ -1441,6 +1451,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             if (event.key === 'Enter') {
                 event.stopPropagation();
+                event.preventDefault();
                 checkAnswer();
             }
         });
