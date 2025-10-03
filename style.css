@@ -20,7 +20,7 @@ body {
     position: relative;
     text-align: center;
     background-color: #fff;
-    padding: 40px;
+    padding: 40px 40px 20px 40px;
     border-radius: 10px;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
     width: 90%;
@@ -225,7 +225,8 @@ button:disabled {
     gap: 10px;
     align-items: center;
     justify-content: center;
-    margin-top: 15px;
+    margin-top: 20px;
+    margin-bottom: 0;
 }
 
 .review-options-fieldset {
