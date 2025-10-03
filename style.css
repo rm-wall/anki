@@ -106,7 +106,7 @@ h1 {
 }
 
 #setup {
-    margin-bottom: 20px;
+    margin-bottom: 10px;
 }
 
 #word-list-input {
@@ -114,6 +114,7 @@ h1 {
     box-sizing: border-box; /* Ensures padding doesn't add to the width */
     padding: 10px;
     font-size: 1rem;
+    font-weight: normal;
     border: 1px solid #ccc;
     border-radius: 8px;
     resize: vertical; /* Allow vertical resizing */
@@ -224,7 +225,7 @@ button:disabled {
     gap: 10px;
     align-items: center;
     justify-content: center;
-    margin-top: 20px;
+    margin-top: 15px;
 }
 
 .review-options-fieldset {
