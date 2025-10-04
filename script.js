@@ -1311,6 +1311,13 @@ document.addEventListener('DOMContentLoaded', async () => {
         const translation = translations[lang];
         if (!translation) return;
 
+        const container = document.querySelector('.container');
+
+        // Hide container during language switch to prevent visual glitches
+        if (container) {
+            container.style.opacity = '0';
+        }
+
         document.documentElement.lang = lang;
         document.querySelectorAll('[data-i18n]').forEach(el => {
             const key = el.getAttribute('data-i18n');
@@ -1325,6 +1332,22 @@ document.addEventListener('DOMContentLoaded', async () => {
         await cardManager.updateDueCount();
         updateLastUpdatedTime(lang);
         updateTextareaStats();
+
+        // Recalculate textarea height and show container after all updates
+        setTimeout(() => {
+            try {
+                if (typeof window.adjustTextareaHeight === 'function') {
+                    window.adjustTextareaHeight(false);
+                }
+            } catch (error) {
+                console.error('Error adjusting textarea height:', error);
+            } finally {
+                // Always show container even if height calculation fails
+                if (container) {
+                    container.style.opacity = '1';
+                }
+            }
+        }, 100);
     }
 
     // --- Update Last Updated Time ---
@@ -1686,33 +1709,56 @@ document.addEventListener('DOMContentLoaded', async () => {
                     });
 
                     // Dynamic textarea height calculation based on viewport
+                    let adjustTextareaHeightTimer = null;
                     function adjustTextareaHeight(showContainer = false) {
                         const footer = document.getElementById('last-updated');
                         const container = document.querySelector('.container');
 
                         if (!footer || !wordListInput || !container) return;
 
-                        const textareaRect = wordListInput.getBoundingClientRect();
                         const viewportHeight = window.innerHeight;
+                        const minHeight = 140;
+                        const maxHeight = 1000;
 
-                        // Calculate where we want the footer to be (bottom of viewport - 10px body padding)
-                        const targetFooterPosition = viewportHeight - 10;
+                        // Temporarily disable transition for accurate measurement
+                        const originalTransition = wordListInput.style.transition;
+                        wordListInput.style.transition = 'none';
 
-                        // Calculate current footer position
+                        // Set to a small height temporarily to measure other elements accurately
+                        wordListInput.style.height = '10px';
+                        container.offsetHeight; // Force layout
+
+                        // Measure all the fixed elements
+                        const bodyPaddingTop = 10; // From CSS: body padding-top
+                        const bodyPaddingBottom = 10; // From CSS: body padding-bottom
+                        const containerRect = container.getBoundingClientRect();
+                        const textareaRect = wordListInput.getBoundingClientRect();
                         const footerRect = footer.getBoundingClientRect();
-                        const currentFooterTop = footerRect.top;
+                        const footerMarginTop = 20; // From CSS: #last-updated margin-top
 
-                        // Calculate how much space the textarea can expand
-                        const expandableSpace = targetFooterPosition - currentFooterTop - footer.offsetHeight;
+                        // Calculate textarea height from bottom up:
+                        // viewport - body paddings - footer - footer margin - container content (except textarea)
+                        const containerTopToTextareaTop = textareaRect.top - containerRect.top;
+                        const textareaBottomToContainerBottom = containerRect.bottom - textareaRect.bottom;
 
-                        if (expandableSpace > 5) { // Only expand if there's more than 5px space
-                            const currentHeight = wordListInput.offsetHeight;
-                            const newHeight = currentHeight + expandableSpace;
-                            const minHeight = 200;
-                            const maxHeight = viewportHeight * 0.7;
+                        const availableHeight = viewportHeight
+                            - bodyPaddingTop
+                            - bodyPaddingBottom
+                            - footerRect.height
+                            - footerMarginTop
+                            - containerTopToTextareaTop
+                            - textareaBottomToContainerBottom
+                            - 20; // Extra buffer for safety
 
-                            wordListInput.style.height = Math.max(minHeight, Math.min(newHeight, maxHeight)) + 'px';
-                        }
+                        // Calculate final height with constraints
+                        let newHeight = Math.max(minHeight, Math.min(availableHeight, maxHeight));
+
+                        // Set to final height directly (no transition yet)
+                        wordListInput.style.height = newHeight + 'px';
+                        container.offsetHeight; // Force layout
+
+                        // Re-enable transition for future changes
+                        wordListInput.style.transition = originalTransition;
 
                         // Show container after height calculation
                         if (showContainer) {
@@ -1721,6 +1767,20 @@ document.addEventListener('DOMContentLoaded', async () => {
                             });
                         }
                     }
+
+                    // Debounced version for language switching to prevent multiple rapid calls
+                    function adjustTextareaHeightDebounced(delay = 0) {
+                        if (adjustTextareaHeightTimer) {
+                            clearTimeout(adjustTextareaHeightTimer);
+                        }
+                        adjustTextareaHeightTimer = setTimeout(() => {
+                            adjustTextareaHeight(false);
+                        }, delay);
+                    }
+
+                    // Expose to window for language switching
+                    window.adjustTextareaHeight = adjustTextareaHeight;
+                    window.adjustTextareaHeightDebounced = adjustTextareaHeightDebounced;
 
                     // Adjust on load and window resize
                     setTimeout(() => adjustTextareaHeight(true), 100);
