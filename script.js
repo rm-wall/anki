@@ -92,7 +92,8 @@ const translations = {
         requiredStreakLabel: '掌握所需连对次数',
         penaltyLabel: '答错扣除连对次数',
         syncButtonLabel: '同步',
-        syncSuccessLabel: '已同步'
+        syncSuccessLabel: '已同步',
+        remainingCards: '剩余 {count} 题'
     },
     'en': {
         title: 'Anki Program',
@@ -186,7 +187,8 @@ const translations = {
         requiredStreakLabel: 'Required Streak',
         penaltyLabel: 'Incorrect Penalty',
         syncButtonLabel: 'Sync',
-        syncSuccessLabel: 'Synced!'
+        syncSuccessLabel: 'Synced!',
+        remainingCards: '{count} cards remaining'
     },
     'ja': {
         title: '暗記プログラム',
@@ -280,7 +282,8 @@ const translations = {
         requiredStreakLabel: '習得に必要な連続正解数',
         penaltyLabel: '不正解時のペナルティ',
         syncButtonLabel: '同期',
-        syncSuccessLabel: '同期完了'
+        syncSuccessLabel: '同期完了',
+        remainingCards: '残り {count} 題'
     }
 };
 document.addEventListener('DOMContentLoaded', async () => {
@@ -347,6 +350,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const suspendButton = document.getElementById('suspend-button');
     const progressBar = document.getElementById('progress-bar');
     const progressText = document.getElementById('progress-text');
+    const remainingCardsEl = document.getElementById('remaining-cards');
     const importFromTextareaButton = document.getElementById('import-from-textarea-button');
 
     let cramButton;
@@ -856,6 +860,16 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 
+    // Helper function to update remaining cards count
+    function updateRemainingCards() {
+        if (sessionCards.length > 0) {
+            const uniqueCardsRemaining = new Set(sessionCards.map(card => card.question)).size;
+            const lang = languageSelect.value;
+            const remainingText = translations[lang].remainingCards.replace('{count}', uniqueCardsRemaining);
+            remainingCardsEl.textContent = remainingText;
+        }
+    }
+
     function displayNextCard() {
         // Reset checking state for the new card
         isChecking = false;
@@ -873,6 +887,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             starButton.classList.toggle('starred', cardOnDisplay.isStarred);
 
             updateProgress(cardOnDisplay);
+            updateRemainingCards();
         } else {
             cardOnDisplay = null; // Clear the displayed card when the session is over
             // The queue is empty, session is over
@@ -1388,6 +1403,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         await cardManager.updateDueCount();
         updateLastUpdatedTime(lang);
         updateTextareaStats();
+        updateRemainingCards(); // Update remaining cards label when language changes
 
         // Recalculate textarea height and show container after all updates
         setTimeout(() => {

@@ -738,3 +738,11 @@ button:disabled {
     color: #666;
     font-family: monospace;
 }
+
+.remaining-cards {
+    text-align: center;
+    font-size: 0.9rem;
+    color: #888;
+    margin-top: 8px;
+    margin-bottom: 8px;
+}
