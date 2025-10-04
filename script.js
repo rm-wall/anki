@@ -914,7 +914,11 @@ document.addEventListener('DOMContentLoaded', async () => {
             // --- CORRECT ANSWER ---
             isAnswerCorrect = true;
             lastCorrectlyAnsweredCard = currentCard; // Store the card for 'Practice Again'
-            currentCard.correctStreak = (currentCard.correctStreak || 0) + 1;
+
+            // Only increment correctStreak if not practicing again
+            if (!isPracticingAgain) {
+                currentCard.correctStreak = (currentCard.correctStreak || 0) + 1;
+            }
 
             const progress = Math.min(1, (currentCard.correctStreak || 0) / currentCard.sessionRequiredStreak);
             progressBar.style.width = `${progress * 100}%`;
