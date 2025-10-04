@@ -365,6 +365,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     let cardOnDisplay = null;
     let lastCorrectlyAnsweredCard = null;
     let isPracticingAgain = false;
+    let lastIncorrectAnswer = null; // Track last incorrect answer to avoid repeated penalties
     let srsSettings = {};
     const defaultSrsSettings = {
         initialInterval: { value: 1, unit: 'days' },
@@ -928,6 +929,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             // --- CORRECT ANSWER ---
             isAnswerCorrect = true;
             lastCorrectlyAnsweredCard = currentCard; // Store the card for 'Practice Again'
+            lastIncorrectAnswer = null; // Clear last incorrect answer on correct answer
 
             // Only increment correctStreak if not practicing again
             if (!isPracticingAgain) {
@@ -942,6 +944,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             await handleCorrectAnswer(currentCard, isPracticingAgain);
 
+            // Reset the practice again flag
+            isPracticingAgain = false;
+
             // Now that it's correct, officially remove it from the front
             sessionCards.shift();
 
@@ -950,9 +955,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                 sessionCards.push(currentCard);
             }
             // If mastered, it's "graduated" and we simply don't add it back.
-
-            // Reset the practice again flag
-            isPracticingAgain = false;
 
             // Show controls to proceed to the next card
             if (autoAdvanceCheckbox.checked) {
@@ -966,10 +968,21 @@ document.addEventListener('DOMContentLoaded', async () => {
             // --- INCORRECT ANSWER ---
             isAnswerCorrect = false;
 
-            // Only apply penalty if not practicing again
-            if (!isPracticingAgain) {
+            // Check if this is the same incorrect answer as last time
+            const isSameIncorrectAnswer = lastIncorrectAnswer !== null &&
+                                         lastIncorrectAnswer.cardQuestion === currentCard.question &&
+                                         lastIncorrectAnswer.answer === processedUserAnswer;
+
+            // Only apply penalty if not practicing again AND not the same incorrect answer
+            if (!isPracticingAgain && !isSameIncorrectAnswer) {
                 currentCard.sessionRequiredStreak += penalty;
             }
+
+            // Store this incorrect answer for next comparison
+            lastIncorrectAnswer = {
+                cardQuestion: currentCard.question,
+                answer: processedUserAnswer
+            };
 
             updateProgress(currentCard);
 
@@ -977,6 +990,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             // Don't reset isPracticingAgain flag here - only reset when answer is correct
             // This ensures that during Redo mode, all incorrect attempts are treated as practice
+            // and user must keep trying until they answer correctly
 
             // The card stays at the front of the queue. Prepare for immediate retry.
             isChecking = false;
@@ -1018,8 +1032,9 @@ document.addEventListener('DOMContentLoaded', async () => {
             sessionCorrectCount++;
         }
 
-        if (!isCramming) {
+        if (!isCramming && !skipCountUpdate) {
             // Only update SRS if the card is considered "mastered" according to the main setting
+            // AND if not in practice mode (skipCountUpdate would be true during Redo)
             if (card.correctStreak >= srsSettings.requiredStreak) {
                 await cardManager.update(card.question, true);
             }
@@ -1468,6 +1483,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         // Set flag to skip count updates for this practice
         isPracticingAgain = true;
+
+        // Remove the card from queue if it exists (to avoid duplicates)
+        sessionCards = sessionCards.filter(card => card.question !== lastCorrectlyAnsweredCard.question);
 
         // Put the last correct card back at the front of the queue
         sessionCards.unshift(lastCorrectlyAnsweredCard);
