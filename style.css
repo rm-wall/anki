@@ -558,6 +558,11 @@ button:disabled {
     text-decoration: line-through;
 }
 
+.suspended-row td:nth-child(2),
+.suspended-row td:nth-child(3) {
+    text-decoration: none;
+}
+
 .modal-toolbar {
     padding-bottom: 10px;
     border-bottom: 1px solid #ccc;
