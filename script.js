@@ -5,7 +5,7 @@ const translations = {
         languageLabel: '语言:',
         mainHeading: '暗记程序',
         listHeading: '输入单词列表',
-        instructions: '格式：<b>问题, 答案1, 答案2...</b>',
+        instructions: '格式：<b>问题| 答案1| 答案2...</b>',
         dropZoneLabel: '将文件拖放到此处，或点击选择文件',
         randomOrderLabel: '随机顺序',
         smartReviewButton: '智能复习 ({dueCount})',
@@ -99,7 +99,7 @@ const translations = {
         languageLabel: 'Language:',
         mainHeading: 'Anki Program',
         listHeading: 'Enter Word List',
-        instructions: 'Format: <b>Question, Answer 1, Answer 2...</b>',
+        instructions: 'Format: <b>Question| Answer 1| Answer 2...</b>',
         dropZoneLabel: 'Drag and drop a file here, or click to select a file',
         randomOrderLabel: 'Random Order',
         smartReviewButton: 'Smart Review ({dueCount})',
@@ -193,7 +193,7 @@ const translations = {
         languageLabel: '言語:',
         mainHeading: '暗記プログラム',
         listHeading: '単語リストを入力',
-        instructions: '形式：<b>問題, 答え1, 答え2...</b>',
+        instructions: '形式：<b>問題| 答え1| 答え2...</b>',
         dropZoneLabel: 'ここにファイルをドラッグ＆ドロップするか、クリックしてファイルを選択します',
         randomOrderLabel: 'ランダムな順序',
         smartReviewButton: 'スマートレビュー ({dueCount})',
@@ -537,7 +537,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 `);
 
                 lines.forEach(line => {
-                    const parts = line.split(',').map(part => part.trim()).filter(part => part);
+                    const parts = line.split('|').map(part => part.trim()).filter(part => part);
                     if (parts.length < 2) return;
 
                     const question = parts[0];
@@ -586,7 +586,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 `);
 
                 lines.forEach(line => {
-                    const parts = line.split(',').map(part => part.trim()).filter(part => part);
+                    const parts = line.split('|').map(part => part.trim()).filter(part => part);
                     if (parts.length < 2) return;
 
                     const question = parts[0];
@@ -723,7 +723,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const currentText = wordListInput.value;
                 const lines = currentText.split('\n');
                 const newLines = lines.filter(line => {
-                    const parts = line.split(',').map(part => part.trim());
+                    const parts = line.split('|').map(part => part.trim());
                     return parts.length === 0 || parts[0] !== cardQuestion;
                 });
                 const newText = newLines.join('\n');
@@ -747,7 +747,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             if (scope === 'textarea') {
                 const text = wordListInput.value.trim();
-                const currentIds = new Set(text.split('\n').map(line => line.split(',')[0].trim()));
+                const currentIds = new Set(text.split('\n').map(line => line.split('|')[0].trim()));
                 dueCards = cardManager.getDueCards().filter(card => currentIds.has(card.question));
                 activeCards = cardManager.getAllActiveCards().filter(card => currentIds.has(card.question));
             } else if (scope === 'starred') {
@@ -810,7 +810,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         let dueCards;
         if (scopeTextareaRadio.checked) {
             const text = wordListInput.value.trim();
-            const currentIds = new Set(text.split('\n').map(line => line.split(',')[0].trim()));
+            const currentIds = new Set(text.split('\n').map(line => line.split('|')[0].trim()));
             dueCards = cardManager.getDueCards().filter(card => currentIds.has(card.question));
         } else if (scopeStarredRadio.checked) {
             dueCards = cardManager.getDueCards().filter(card => card.isStarred);
@@ -828,7 +828,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         let activeCards;
         if (scopeTextareaRadio.checked) {
             const text = wordListInput.value.trim();
-            const currentIds = new Set(text.split('\n').map(line => line.split(',')[0].trim()));
+            const currentIds = new Set(text.split('\n').map(line => line.split('|')[0].trim()));
             activeCards = Array.from(allCards.values()).filter(card => !card.isSuspended && currentIds.has(card.question));
         } else if (scopeStarredRadio.checked) {
             activeCards = Array.from(allCards.values()).filter(card => !card.isSuspended && card.isStarred);
@@ -876,7 +876,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         continueButton.style.display = 'none';
 
         if (sessionIncorrectCards.length > 0) {
-            incorrectWordsListEl.innerHTML = sessionIncorrectCards.map(card => `<div>${card.answers.join(', ')}</div>`).join('');
+            incorrectWordsListEl.innerHTML = sessionIncorrectCards.map(card => `<div>${card.answers.join(' | ')}</div>`).join('');
             incorrectWordsContainer.style.display = 'block';
         } else {
             incorrectWordsContainer.style.display = 'none';
@@ -1014,7 +1014,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             return;
         }
 
-        const lines = text.split('\n').filter(line => line.split(',').map(part => part.trim()).filter(part => part).length >= 2);
+        const lines = text.split('\n').filter(line => line.split('|').map(part => part.trim()).filter(part => part).length >= 2);
         const totalCount = lines.length;
         let newCount = 0;
         let learnedCount = 0;
@@ -1022,7 +1022,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         let starredCount = 0;
 
         lines.forEach(line => {
-            const question = line.split(',')[0].trim();
+            const question = line.split('|')[0].trim();
             const card = allCards.get(question);
             if (card) {
                 if (card.isStarred) {
@@ -1089,7 +1089,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         let sourceCards;
         if (viewType === 'current') {
             const text = wordListInput.value.trim();
-            const currentIds = new Set(text.split('\n').map(line => line.split(',')[0].trim()));
+            const currentIds = new Set(text.split('\n').map(line => line.split('|')[0].trim()));
             sourceCards = Array.from(allCards.values()).filter(card => currentIds.has(card.question));
         } else {
             sourceCards = Array.from(allCards.values());
@@ -1159,7 +1159,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                         <tr class="${card.isSuspended ? 'suspended-row' : ''}">
                             <td>${starDisplay}</td>
                             <td>${card.question || ''}</td>
-                            <td>${(card.answers || []).slice(1).join(', ')}</td>
+                            <td>${(card.answers || []).slice(1).join(' | ')}</td>
                             <td>${formatReviewDate(card.nextReviewDate, lang)}</td>
                             <td>${intervalDisplay}</td>
                             <td>${(card.efactor || 2.5).toFixed(2)}</td>
@@ -1246,7 +1246,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             return;
         }
 
-        const cardData = cardsToExport.map(card => `${card.question},${card.answers.slice(1).join(',')}`);
+        const cardData = cardsToExport.map(card => `${card.question}|${card.answers.slice(1).join('|')}`);
         const data = cardData.join('\n');
         const blob = new Blob([data], { type: 'text/plain' });
         const url = URL.createObjectURL(blob);
