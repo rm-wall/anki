@@ -905,8 +905,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         answerInput.disabled = true;
 
         const currentCard = cardOnDisplay; // Use the card that is currently on display
-        const processedUserAnswer = userAnswer.replace(/\s/g, '').toLowerCase();
-        const processedAnswers = currentCard.answers.map(a => a.replace(/\s/g, '').toLowerCase());
+        const processedUserAnswer = userAnswer.replace(/[\s\p{P}\p{S}]/gu, '').toLowerCase();
+        const processedAnswers = currentCard.answers.map(a => a.replace(/[\s\p{P}\p{S}]/gu, '').toLowerCase());
         const penalty = parseInt(penaltyInput.value, 10) || 2;
 
         if (processedAnswers.includes(processedUserAnswer)) {
