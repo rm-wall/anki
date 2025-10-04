@@ -265,6 +265,7 @@ button:disabled {
 .option-separator {
     border-left: 1px solid #ddd;
     height: 20px;
+    margin: 0 15px;
 }
 
 
