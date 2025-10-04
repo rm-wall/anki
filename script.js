@@ -1644,6 +1644,13 @@ document.addEventListener('DOMContentLoaded', async () => {
                 timestamp: new Date().toISOString()
             });
 
+            // Capture Command+S (Mac) or Ctrl+S (Windows/Linux) to trigger Sync button
+            if ((event.metaKey || event.ctrlKey) && event.key === 's') {
+                event.preventDefault();
+                importFromTextareaButton.click();
+                return;
+            }
+
             if (errorModal.style.display === 'block' || settingsModal.style.display === 'flex') return;
             if (event.key === 'Enter' && continueButton.style.display !== 'none') {
                 event.preventDefault();
