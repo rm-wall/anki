@@ -712,13 +712,14 @@ button:disabled {
 
 /* --- Progress Bar --- */
 #progress-bar-container {
+    position: relative;
     height: 4px;
     width: 100%;
     background-color: #e0e0e0;
     border-radius: 2px;
     margin-top: 10px;
     margin-bottom: 40px;
-    overflow: hidden;
+    overflow: visible;
 }
 
 #progress-bar {
@@ -727,4 +728,13 @@ button:disabled {
     background-color: #007aff;
     border-radius: 2px;
     transition: width 0.3s ease-in-out;
+}
+
+#progress-text {
+    position: absolute;
+    top: 8px;
+    left: 0;
+    font-size: 0.85rem;
+    color: #666;
+    font-family: monospace;
 }

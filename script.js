@@ -346,6 +346,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const starButton = document.getElementById('star-button');
     const suspendButton = document.getElementById('suspend-button');
     const progressBar = document.getElementById('progress-bar');
+    const progressText = document.getElementById('progress-text');
     const importFromTextareaButton = document.getElementById('import-from-textarea-button');
 
     let cramButton;
@@ -840,6 +841,20 @@ document.addEventListener('DOMContentLoaded', async () => {
         await startSession(activeCards);
     }
 
+    // Helper function to update progress bar and text
+    function updateProgress(card) {
+        const progress = Math.max(0, (card.correctStreak || 0) / card.sessionRequiredStreak);
+        progressBar.style.width = `${progress * 100}%`;
+        progressText.textContent = `${card.correctStreak || 0}/${card.sessionRequiredStreak}`;
+
+        console.log('[Progress Update]', {
+            question: card.question,
+            correctStreak: card.correctStreak || 0,
+            sessionRequiredStreak: card.sessionRequiredStreak,
+            progressPercentage: `${(progress * 100).toFixed(1)}%`
+        });
+    }
+
     function displayNextCard() {
         // Reset checking state for the new card
         isChecking = false;
@@ -856,8 +871,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             starButton.textContent = cardOnDisplay.isStarred ? '★' : '☆';
             starButton.classList.toggle('starred', cardOnDisplay.isStarred);
 
-            const progress = Math.max(0, (cardOnDisplay.correctStreak || 0) / cardOnDisplay.sessionRequiredStreak);
-            progressBar.style.width = `${progress * 100}%`;
+            updateProgress(cardOnDisplay);
         } else {
             cardOnDisplay = null; // Clear the displayed card when the session is over
             // The queue is empty, session is over
@@ -918,10 +932,13 @@ document.addEventListener('DOMContentLoaded', async () => {
             // Only increment correctStreak if not practicing again
             if (!isPracticingAgain) {
                 currentCard.correctStreak = (currentCard.correctStreak || 0) + 1;
+                // Cap correctStreak at sessionRequiredStreak to prevent overflow
+                if (currentCard.correctStreak > currentCard.sessionRequiredStreak) {
+                    currentCard.correctStreak = currentCard.sessionRequiredStreak;
+                }
             }
 
-            const progress = Math.min(1, (currentCard.correctStreak || 0) / currentCard.sessionRequiredStreak);
-            progressBar.style.width = `${progress * 100}%`;
+            updateProgress(currentCard);
 
             await handleCorrectAnswer(currentCard, isPracticingAgain);
 
@@ -954,13 +971,12 @@ document.addEventListener('DOMContentLoaded', async () => {
                 currentCard.sessionRequiredStreak += penalty;
             }
 
-            const progress = Math.max(0, (currentCard.correctStreak || 0) / currentCard.sessionRequiredStreak);
-            progressBar.style.width = `${progress * 100}%`;
+            updateProgress(currentCard);
 
             await handleIncorrectAnswer(currentCard, isPracticingAgain);
 
-            // Reset the practice again flag
-            isPracticingAgain = false;
+            // Don't reset isPracticingAgain flag here - only reset when answer is correct
+            // This ensures that during Redo mode, all incorrect attempts are treated as practice
 
             // The card stays at the front of the queue. Prepare for immediate retry.
             isChecking = false;
