@@ -363,6 +363,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     let allCards = new Map();
     let cardOnDisplay = null;
     let lastCorrectlyAnsweredCard = null;
+    let isPracticingAgain = false;
     let srsSettings = {};
     const defaultSrsSettings = {
         initialInterval: { value: 1, unit: 'days' },
@@ -914,20 +915,23 @@ document.addEventListener('DOMContentLoaded', async () => {
             isAnswerCorrect = true;
             lastCorrectlyAnsweredCard = currentCard; // Store the card for 'Practice Again'
             currentCard.correctStreak = (currentCard.correctStreak || 0) + 1;
-            
+
             const progress = Math.min(1, (currentCard.correctStreak || 0) / currentCard.sessionRequiredStreak);
             progressBar.style.width = `${progress * 100}%`;
 
-            await handleCorrectAnswer(currentCard);
+            await handleCorrectAnswer(currentCard, isPracticingAgain);
 
             // Now that it's correct, officially remove it from the front
-            sessionCards.shift(); 
+            sessionCards.shift();
 
             // If not yet mastered for the session, put it at the back of the queue
             if (currentCard.correctStreak < currentCard.sessionRequiredStreak) {
                 sessionCards.push(currentCard);
             }
             // If mastered, it's "graduated" and we simply don't add it back.
+
+            // Reset the practice again flag
+            isPracticingAgain = false;
 
             // Show controls to proceed to the next card
             if (autoAdvanceCheckbox.checked) {
@@ -940,12 +944,19 @@ document.addEventListener('DOMContentLoaded', async () => {
         } else {
             // --- INCORRECT ANSWER ---
             isAnswerCorrect = false;
-            currentCard.sessionRequiredStreak += penalty;
+
+            // Only apply penalty if not practicing again
+            if (!isPracticingAgain) {
+                currentCard.sessionRequiredStreak += penalty;
+            }
 
             const progress = Math.max(0, (currentCard.correctStreak || 0) / currentCard.sessionRequiredStreak);
             progressBar.style.width = `${progress * 100}%`;
 
-            await handleIncorrectAnswer(currentCard);
+            await handleIncorrectAnswer(currentCard, isPracticingAgain);
+
+            // Reset the practice again flag
+            isPracticingAgain = false;
 
             // The card stays at the front of the queue. Prepare for immediate retry.
             isChecking = false;
@@ -977,11 +988,16 @@ document.addEventListener('DOMContentLoaded', async () => {
         displayNextCard(); // Directly display the next card in the queue
     }
 
-    async function handleCorrectAnswer(card) {
+    async function handleCorrectAnswer(card, skipCountUpdate = false) {
         const feedbackText = translations[languageSelect.value].correctFeedback;
         feedbackEl.textContent = feedbackText.replace('{answers}', card.answers.join(' / '));
         feedbackEl.className = 'correct';
-        sessionCorrectCount++;
+
+        // Only increment count if not practicing again
+        if (!skipCountUpdate) {
+            sessionCorrectCount++;
+        }
+
         if (!isCramming) {
             // Only update SRS if the card is considered "mastered" according to the main setting
             if (card.correctStreak >= srsSettings.requiredStreak) {
@@ -990,18 +1006,23 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
-    async function handleIncorrectAnswer(card) {
+    async function handleIncorrectAnswer(card, skipCountUpdate = false) {
         const feedbackText = translations[languageSelect.value].incorrectFeedback;
         feedbackEl.textContent = feedbackText.replace('{answers}', card.answers.join(' / '));
         feedbackEl.className = 'incorrect';
-        sessionIncorrectCount++;
-        if (!sessionIncorrectCards.some(c => c.question === card.question)) {
-            sessionIncorrectCards.push(card);
+
+        // Only increment count if not practicing again
+        if (!skipCountUpdate) {
+            sessionIncorrectCount++;
+            if (!sessionIncorrectCards.some(c => c.question === card.question)) {
+                sessionIncorrectCards.push(card);
+            }
+            if (!isCramming && !reviewAgainPile.some(c => c.question === card.question)) {
+                reviewAgainPile.push(card);
+            }
         }
-        if (!isCramming && !reviewAgainPile.some(c => c.question === card.question)) {
-            reviewAgainPile.push(card);
-        }
-        if (!isCramming) {
+
+        if (!isCramming && !skipCountUpdate) {
             await cardManager.update(card.question, false);
         }
     }
@@ -1425,6 +1446,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     redoButton.addEventListener('click', () => {
         if (!lastCorrectlyAnsweredCard) return;
 
+        // Set flag to skip count updates for this practice
+        isPracticingAgain = true;
+
         // Put the last correct card back at the front of the queue
         sessionCards.unshift(lastCorrectlyAnsweredCard);
         lastCorrectlyAnsweredCard = null; // Clear it after use
@@ -1439,7 +1463,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         suspendButton.style.display = 'none';
         isChecking = false;
         isAnswerCorrect = false;
-        
+
         displayNextCard();
         answerInput.focus();
     });
