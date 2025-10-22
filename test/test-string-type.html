@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Test String Type Detection</title>
+</head>
+<body>
+    <h1>String Type Detection Test</h1>
+    <div id="results"></div>
+
+    <script type="module">
+        import { detectStringType } from '../src/utils/algorithms.js';
+
+        const testCases = [
+            { input: "hiragana", expected: "romaji" },
+            { input: "kenkou na karada", expected: "romaji" },
+            { input: "seito kaichou", expected: "romaji" },
+            { input: "平假名", expected: "cjk" },
+            { input: "健康的身体", expected: "cjk" },
+            { input: "学生会会长", expected: "cjk" },
+            { input: "ひらがな", expected: "cjk" },
+            { input: "健康な体", expected: "cjk" },
+            { input: "三月の祝日", expected: "cjk" },
+            { input: "abc123", expected: "romaji" },
+            { input: "  ", expected: "romaji" }, // empty after normalization
+        ];
+
+        const resultsDiv = document.getElementById('results');
+        let allPassed = true;
+
+        testCases.forEach(({ input, expected }) => {
+            const result = detectStringType(input);
+            const passed = result === expected;
+            allPassed = allPassed && passed;
+
+            const resultDiv = document.createElement('div');
+            resultDiv.style.padding = '10px';
+            resultDiv.style.marginBottom = '5px';
+            resultDiv.style.backgroundColor = passed ? '#d4edda' : '#f8d7da';
+            resultDiv.style.border = passed ? '1px solid #c3e6cb' : '1px solid #f5c6cb';
+            resultDiv.style.borderRadius = '4px';
+
+            resultDiv.innerHTML = `
+                <strong>${passed ? '✓' : '✗'}</strong>
+                Input: "<code>${input}</code>" →
+                Result: <strong>${result}</strong>
+                (Expected: ${expected})
+            `;
+
+            resultsDiv.appendChild(resultDiv);
+        });
+
+        const summaryDiv = document.createElement('div');
+        summaryDiv.style.padding = '15px';
+        summaryDiv.style.marginTop = '20px';
+        summaryDiv.style.backgroundColor = allPassed ? '#d4edda' : '#f8d7da';
+        summaryDiv.style.border = allPassed ? '2px solid #28a745' : '2px solid #dc3545';
+        summaryDiv.style.borderRadius = '4px';
+        summaryDiv.innerHTML = `<h2>${allPassed ? '✓ All tests passed!' : '✗ Some tests failed'}</h2>`;
+        resultsDiv.appendChild(summaryDiv);
+    </script>
+</body>
+</html>

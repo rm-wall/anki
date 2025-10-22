@@ -1,0 +1,934 @@
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: 100vh;
+    margin: 0;
+    padding: 10px 0;
+    background-color: #f0f2f5;
+    color: #333;
+    box-sizing: border-box;
+}
+
+#last-updated {
+    margin-top: auto;
+    padding-top: 15px;
+    font-size: 0.8rem;
+    color: #8e8e93;
+    text-align: center;
+}
+
+.container {
+    position: relative;
+    text-align: center;
+    background-color: #fff;
+    padding: 20px 40px 12px 40px;
+    border-radius: 10px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    width: 90vw;
+    max-width: 90vw;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    opacity: 0;
+    transition: opacity 0.2s ease-in;
+}
+
+.container.loaded {
+    opacity: 1;
+}
+
+.language-switcher {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    display: flex;
+    align-items: center;
+}
+
+#language-select {
+    padding: 5px;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+    margin-left: 5px;
+}
+
+h1 {
+    margin-top: 0;
+    margin-bottom: 15px;
+    font-size: 1.8rem;
+    color: #1c1c1e;
+}
+
+h2 {
+    margin-top: 0;
+    margin-bottom: 10px;
+    font-size: 1.3rem;
+}
+
+#card {
+    position: relative;
+    margin-top: 40px;
+    padding-bottom: 40px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.question {
+    font-size: 3rem;
+    font-weight: bold;
+    margin-bottom: 40px;
+    margin-top: 60px;
+    color: #007aff;
+    min-height: 60px;
+}
+
+.answer-input-container {
+    position: relative;
+    width: 100%;
+    margin-bottom: 10px;
+}
+
+#answer-input {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    font-size: 2.5rem;
+    box-sizing: border-box;
+    text-align: center;
+    font-family: 'Menlo', 'Monaco', 'Consolas', "Courier New", monospace;
+    letter-spacing: 0.1em;
+    resize: none;
+    overflow: hidden;
+    min-height: 60px;
+    max-height: 200px;
+    line-height: 1.2;
+    background-color: transparent;
+    position: relative;
+    z-index: 2;
+}
+
+#answer-hint {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 1.2rem;
+    color: #999;
+    text-align: center;
+    pointer-events: none;
+    z-index: 1;
+    white-space: nowrap;
+}
+
+#answer-input:focus {
+    outline: none;
+    border-color: #007aff;
+    box-shadow: 0 0 0 2px rgba(0, 122, 255, 0.2);
+}
+
+#setup {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+#word-list-input {
+    width: 100%;
+    box-sizing: border-box; /* Ensures padding doesn't add to the width */
+    padding: 10px;
+    font-family: 'Noto Sans JP', 'Noto Sans SC', 'Arial', sans-serif;
+    font-size: 1rem;
+    font-weight: normal;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    resize: vertical; /* Allow vertical resizing */
+    margin-bottom: 15px;
+    min-height: 0; /* Allow flex to control height */
+    max-height: none; /* Remove max-height restriction */
+    flex: 1;
+    /* Transition removed - causes visual glitches during language switch */
+}
+
+.textarea-container {
+    position: relative;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0; /* Allow flex item to shrink below content size */
+}
+
+.textarea-button-group {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    display: flex;
+    gap: 8px;
+}
+
+.import-file-button,
+.import-textarea-button,
+.export-textarea-button {
+    padding: 5px 10px;
+    font-size: 0.8rem;
+}
+
+.import-file-button {
+    background-color: #34c759;
+}
+
+.import-file-button:hover {
+    background-color: #2ca349;
+}
+
+.import-textarea-button {
+    background-color: #5856d6;
+    margin-left: 8px;
+}
+
+.import-textarea-button:hover {
+    background-color: #3d3b9e;
+}
+
+.export-textarea-button {
+    background-color: #ff9500;
+}
+
+.export-textarea-button:hover {
+    background-color: #cc7700;
+}
+
+
+.textarea-stats {
+    display: flex;
+    justify-content: space-between;
+    color: #8e8e93;
+    margin-top: -10px;
+    margin-bottom: 10px;
+    font-size: 0.9rem;
+    padding: 0 5px;
+}
+
+.compact-instructions {
+    margin: 8px 0;
+    font-size: 0.95em;
+}
+
+.container.dragover {
+    box-shadow: 0 0 0 4px #007aff;
+}
+
+#feedback {
+    margin-top: 30px;
+    margin-bottom: 30px;
+    min-height: 2.8rem; /* Approximately two lines of text */
+    font-size: 1.2rem;
+    font-weight: bold;
+    text-align: center;
+}
+
+.auto-advance-option {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 20px;
+}
+
+.correct {
+    color: #34c759;
+}
+
+.incorrect {
+    color: #ff3b30;
+}
+
+.answer-char-correct {
+    color: #34c759;
+    font-weight: bold;
+}
+
+.answer-char-incorrect {
+    color: #ff3b30;
+    font-weight: bold;
+}
+
+.answer-char-extra {
+    color: #ff3b30;
+    font-weight: bold;
+    text-decoration: underline;
+}
+
+button {
+    background-color: #007aff;
+    color: white;
+    border: none;
+    padding: 12px 20px; /* Increased padding for better touch targets */
+    border-radius: 8px;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+button:hover {
+    background-color: #005ecb;
+}
+
+button:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+}
+
+
+.button-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: center;
+    justify-content: center;
+    margin-top: 15px;
+    margin-bottom: 0;
+}
+
+.review-options-fieldset {
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    padding: 10px 15px;
+    margin: 15px 0 0; /* No longer centered */
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    align-items: center;
+    width: 100%;
+    box-sizing: border-box;
+    justify-content: space-around;
+}
+
+.option-separator {
+    border-left: 1px solid #ddd;
+    height: 20px;
+    margin: 0 5px;
+}
+
+
+.review-options-fieldset legend {
+    padding: 0 5px;
+    font-size: 0.9em;
+    color: #555;
+}
+
+.order-option, .review-scope-option {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    white-space: nowrap;
+}
+
+.order-option label, .review-scope-option label {
+    font-size: 0.95em;
+}
+
+
+
+.button-group button {
+    margin-top: 0; /* Remove margin as gap is used now */
+}
+
+/* Styles for Terminate and Show Errors buttons */
+#terminate-button, #show-errors-button, #practice-errors-button {
+    background-color: #8e8e93; /* A neutral grey */
+}
+
+#terminate-button:hover, #show-errors-button:hover {
+    background-color: #6d6d72;
+}
+
+#continue-button {
+    background-color: #34c759; /* Green for continue */
+}
+
+#continue-button:hover {
+    background-color: #2ca349;
+}
+
+#suspend-button {
+    background-color: #ff9500; /* Orange for suspend */
+}
+
+#suspend-button:hover {
+    background-color: #e08500;
+}
+
+#skip-button {
+    background-color: #007aff; /* Blue for skip */
+}
+
+#skip-button:hover {
+    background-color: #0051d5;
+}
+
+
+
+/* Modal Styles */
+.modal {
+    display: none; /* Hidden by default */
+    position: fixed; /* Stay in place */
+    z-index: 2000; /* Sit on top of everything */
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.5); /* Black w/ opacity */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-content {
+    background-color: #fefefe;
+    padding: 20px;
+    border: 1px solid #888;
+    width: 95vw; /* Use viewport width */
+    height: 90vh; /* Use viewport height */
+    max-width: 95vw; /* Remove fixed max-width */
+    border-radius: 10px;
+    position: relative;
+    text-align: left;
+    display: flex;
+    flex-direction: column;
+}
+
+#settings-modal .modal-content {
+    height: auto;
+    max-width: 500px;
+}
+
+#edit-card-modal .modal-content {
+    height: auto;
+    max-width: 800px;
+    width: 90%;
+}
+
+.modal-content h2 {
+    text-align: center;
+    width: 100%;
+    margin-top: 0;
+}
+
+.close-button {
+    color: #aaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+}
+
+.close-button:hover,
+.close-button:focus {
+    color: black;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.modal-io-buttons {
+    display: flex;
+    gap: 10px;
+}
+
+#export-cards-button, #import-cards-button {
+    padding: 8px 15px;
+    font-size: 0.9rem;
+}
+
+#export-cards-button {
+    background-color: #34c759; /* Green */
+}
+#export-cards-button:hover {
+    background-color: #2ca349;
+}
+
+#import-cards-button {
+    background-color: #ff9500; /* Orange */
+}
+#import-cards-button:hover {
+    background-color: #e08500;
+}
+
+#modal-incorrect-list {
+    background-color: #f0f2f5;
+    border-radius: 5px;
+    padding: 10px;
+    margin-top: 10px;
+    overflow: hidden;
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.table-scroll-container {
+    flex-grow: 1;
+    overflow-y: auto;
+}
+
+/* --- Settings Modal Styles --- */
+.settings-form {
+    margin-top: 20px;
+}
+
+.settings-form-group {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.settings-form-group label {
+    margin-right: 10px;
+    white-space: nowrap;
+}
+
+.input-group {
+    display: flex;
+    gap: 5px;
+}
+
+.settings-form-group input[type="number"] {
+    width: 80px;
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 1rem;
+}
+
+.settings-form-group select {
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 1rem;
+}
+
+.modal-button-group {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid #eee;
+}
+
+#reset-settings-button {
+    background-color: #ff3b30;
+}
+#reset-settings-button:hover {
+    background-color: #c7001e;
+}
+
+
+.settings-backup-zone {
+    margin-top: 30px;
+    padding-top: 15px;
+    border-top: 1px solid #ccc;
+}
+.settings-backup-zone h3 {
+    margin-top: 0;
+    color: #007aff;
+}
+.backup-buttons {
+    display: flex;
+    gap: 10px;
+}
+#export-database-button, #import-database-button {
+    flex: 1;
+    background-color: #007aff;
+}
+#export-database-button:hover, #import-database-button:hover {
+    background-color: #005ecb;
+}
+
+.settings-danger-zone {
+    margin-top: 30px;
+    padding-top: 15px;
+    border-top: 1px solid #ffbaba;
+}
+.settings-danger-zone h3 {
+    margin-top: 0;
+    color: #ff3b30;
+}
+#clear-cache-button {
+    background-color: #ff3b30;
+    width: 100%;
+}
+#clear-cache-button:hover {
+    background-color: #c7001e;
+}
+
+/* --- Edit Card Modal Styles --- */
+.edit-card-form {
+    margin-top: 20px;
+}
+
+.edit-form-group {
+    margin-bottom: 15px;
+}
+
+.edit-form-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 500;
+    color: #333;
+}
+
+.edit-input {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 1.8rem;
+    box-sizing: border-box;
+    font-family: 'Menlo', 'Monaco', 'Consolas', "Courier New", monospace;
+    letter-spacing: 0.05em;
+    resize: vertical;
+    min-height: 120px;
+    line-height: 1.4;
+}
+
+.edit-input:focus {
+    outline: none;
+    border-color: #007aff;
+    box-shadow: 0 0 0 2px rgba(0, 122, 255, 0.2);
+}
+
+.edit-btn {
+    background-color: #5856d6;
+}
+
+.edit-btn:hover {
+    background-color: #3d3b9e;
+}
+
+#cancel-edit-button {
+    background-color: #8e8e93;
+}
+
+#cancel-edit-button:hover {
+    background-color: #6d6d72;
+}
+
+
+/* --- Card Status Table Styles --- */
+.cards-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+    margin-top: 15px;
+}
+
+.cards-table th, .cards-table td {
+    border: 1px solid #ddd;
+    padding: 8px;
+    text-align: left;
+    vertical-align: middle;
+}
+
+.cards-table th {
+    position: sticky;
+    top: 0;
+    background-color: #f2f2f2;
+    font-weight: bold;
+    z-index: 1;
+    cursor: pointer;
+    user-select: none;
+    position: relative;
+    padding-right: 20px;
+}
+
+.cards-table th:hover {
+    background-color: #e8e8e8;
+}
+
+.cards-table th.sortable::after {
+    content: '⇅';
+    position: absolute;
+    right: 8px;
+    opacity: 0.3;
+    font-size: 0.8em;
+}
+
+.cards-table th.sort-asc::after {
+    content: '▲';
+    opacity: 1;
+}
+
+.cards-table th.sort-desc::after {
+    content: '▼';
+    opacity: 1;
+}
+
+.cards-table th:first-child {
+    cursor: default;
+}
+
+.cards-table th:first-child::after {
+    content: none;
+}
+
+.cards-table tr:nth-child(even) {
+    background-color: #f9f9f9;
+}
+
+.cards-table tr:hover {
+    background-color: #e9e9e9;
+}
+
+.cards-table td:last-child {
+    white-space: nowrap;
+}
+
+.status-new,
+.status-due,
+.status-review,
+.status-suspended {
+    white-space: nowrap;
+}
+
+.status-new {
+    color: #007aff;
+    font-weight: bold;
+}
+
+.status-due {
+    color: #ff9500;
+    font-weight: bold;
+}
+
+.status-review {
+    color: #34c759;
+}
+
+.status-suspended {
+    color: #8e8e93;
+    font-style: italic;
+}
+
+.suspended-row {
+    opacity: 0.6;
+    background-color: #f5f5f5;
+}
+
+.suspended-row td {
+    text-decoration: line-through;
+}
+
+.suspended-row td:nth-child(2),
+.suspended-row td:nth-child(3) {
+    text-decoration: none;
+}
+
+.modal-toolbar {
+    padding-bottom: 10px;
+    border-bottom: 1px solid #ccc;
+    margin-bottom: 10px;
+    display: flex;
+    justify-content: space-between; /* Replaces gap for alignment */
+    align-items: center;
+}
+
+.modal-toolbar-left {
+    display: flex;
+    gap: 20px;
+    align-items: center;
+}
+
+.view-tabs, .filter-tabs {
+    display: flex;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    overflow: hidden; /* Ensures the inner button corners don't stick out */
+}
+
+.view-tabs .tab-btn, .filter-tabs .tab-btn {
+    border: none; /* Remove individual borders */
+    border-radius: 0; /* Remove individual border-radius */
+    border-right: 1px solid #ccc; /* Add a separator */
+    margin: 0;
+}
+
+.view-tabs .tab-btn:last-child, .filter-tabs .tab-btn:last-child {
+    border-right: none; /* No separator for the last button */
+}
+
+.action-btn {
+    padding: 4px 8px;
+    font-size: 0.8rem;
+    border-radius: 5px;
+    white-space: nowrap;
+}
+
+.suspend-btn {
+    background-color: #ff9500;
+}
+.suspend-btn:hover {
+    background-color: #e08500;
+}
+
+.restore-btn {
+    background-color: #34c759;
+}
+.restore-btn:hover {
+    background-color: #2ca349;
+}
+
+.delete-btn {
+    background-color: #ff3b30;
+}
+.delete-btn:hover {
+    background-color: #c7001e;
+}
+
+.star-toggle-btn {
+    background: none;
+    border: none;
+    font-size: 1.2rem;
+    cursor: pointer;
+    padding: 0;
+    color: #ccc;
+}
+
+.star-toggle-btn.starred {
+    color: #ffcc00;
+}
+
+.tab-btn {
+    padding: 8px 15px;
+    border: 1px solid #ccc;
+    background-color: #f0f0f0;
+    cursor: pointer;
+    border-radius: 5px;
+    font-size: 0.9rem;
+    color: #333;
+    min-width: 100px; /* Add min-width */
+    text-align: center; /* Center the text */
+    font-weight: bold; /* Make all tabs bold */
+}
+
+.tab-btn.active {
+    background-color: #007aff;
+    color: white;
+    border-color: #007aff;
+}
+
+.tab-btn:not(.active):hover {
+    background-color: #e0e0e0;
+}
+
+
+/* --- Cram Button Style --- */
+#cram-button {
+    background-color: #5856d6; /* A distinct purple color */
+    margin-right: 20px;
+}
+
+#cram-button:hover {
+    background-color: #3d3b9e;
+}
+
+.star-button {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    background: none;
+    border: none;
+    font-size: 2rem;
+    color: #ffcc00;
+    cursor: pointer;
+    padding: 0;
+}
+
+.star-button.starred {
+    color: #ffcc00;
+}
+
+.star-button:not(.starred) {
+    color: #ccc;
+}
+
+#edit-card-button {
+    background-color: #5856d6;
+    margin-right: 15px;
+}
+
+#edit-card-button:hover {
+    background-color: #3d3b9e;
+}
+
+#summary {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+#summary #restart-button {
+    margin-top: 20px;
+}
+
+/* --- Loading Overlay --- */
+#loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(255, 255, 255, 0.8);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    font-size: 1.2rem;
+    color: #333;
+}
+
+/* --- Progress Bar --- */
+#progress-bar-container {
+    position: relative;
+    height: 4px;
+    width: 100%;
+    background-color: #e0e0e0;
+    border-radius: 2px;
+    margin-top: 10px;
+    margin-bottom: 40px;
+    overflow: visible;
+}
+
+#progress-bar {
+    height: 100%;
+    width: 0; /* Initially 0 */
+    background-color: #007aff;
+    border-radius: 2px;
+    transition: width 0.3s ease-in-out;
+}
+
+#progress-text {
+    position: absolute;
+    top: 8px;
+    left: 0;
+    font-size: 0.85rem;
+    color: #666;
+    font-family: monospace;
+}
+
+.remaining-cards {
+    text-align: center;
+    font-size: 0.9rem;
+    color: #888;
+    margin-top: 8px;
+    margin-bottom: 8px;
+}
+
+/* --- Celebration Animation --- */
+#progress-bar.celebrating {
+    background-color: #34c759;
+    transition: width 0.3s ease-in-out, background-color 0.3s ease;
+}

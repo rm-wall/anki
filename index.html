@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title data-i18n="title">Anki Program</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/svg+xml" href="icon.svg">
+    <meta name="theme-color" content="#4CAF50">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="Anki">
+    <link rel="apple-touch-icon" href="icon.svg">
+</head>
+<body>
+    <div id="loading-overlay"></div>
+    <div class="container">
+        <div class="language-switcher">
+            <label for="language-select" data-i18n="languageLabel">Language:</label>
+            <select id="language-select">
+                <option value="zh-CN">中文</option>
+                <option value="en">English</option>
+                <option value="ja">日本語</option>
+            </select>
+        </div>
+
+        <h1 data-i18n="mainHeading">Anki Program</h1>
+
+        <div id="setup">
+            <h2 data-i18n="listHeading">Enter Word List</h2>
+            <p data-i18n="instructions" class="compact-instructions">Format: <b>Question| Answer 1| Answer 2...</b></p>
+            <input type="file" id="file-input" accept=".txt,.csv" style="display: none;">
+            <div class="textarea-container">
+                <textarea id="word-list-input" rows="15">
+健康な体 | kenkou na karada | 健康的身体
+三月の祝日 | sangatsu no shukujitsu | 三月的节日
+生徒会長 | seito kaichou | 学生会会长
+観光案内 | kankou annai | 旅游指南
+特別な一日 | tokubetsu na ichinichi | 特别的一天
+放課後 | houkago | 放学后
+好物のお菓子 | koubutsu no okashi | 喜欢的点心
+投票用紙 | touhyou youshi | 投票用纸
+
+</textarea>
+                <div class="textarea-button-group">
+                    <button id="import-file-button" class="import-file-button" data-i18n="importFileButtonLabel"></button>
+                    <button id="export-textarea-button" class="export-textarea-button" data-i18n="exportTextareaButtonLabel"></button>
+                    <button id="import-from-textarea-button" class="import-textarea-button" data-i18n="syncButtonLabel"></button>
+                </div>
+            </div>
+            <div id="textarea-stats" class="textarea-stats">
+                <span id="total-words-stat"></span>
+                <span id="new-words-stat"></span>
+                <span id="learned-words-stat"></span>
+                <span id="suspended-words-stat"></span>
+                <span id="starred-words-stat"></span>
+            </div>
+            <fieldset class="review-options-fieldset">
+                <legend data-i18n="reviewOptionsLegend">Review Options</legend>
+                <div class="review-scope-option">
+                    <input type="radio" id="scope-all" name="review-scope" value="all" checked>
+                    <label for="scope-all" data-i18n="scopeAllLabel">All words</label>
+                </div>
+                <div class="review-scope-option">
+                    <input type="radio" id="scope-textarea" name="review-scope" value="textarea">
+                    <label for="scope-textarea" data-i18n="scopeTextareaLabel">Words in textarea</label>
+                </div>
+                <div class="review-scope-option">
+                    <input type="radio" id="scope-starred" name="review-scope" value="starred">
+                    <label for="scope-starred" data-i18n="scopeStarredLabel">Starred Words</label>
+                </div>
+                <span class="option-separator"></span>
+                <div class="order-option">
+                    <input type="checkbox" id="random-order-checkbox" checked>
+                    <label for="random-order-checkbox" data-i18n="randomOrderLabel">Random Order</label>
+                </div>
+            </fieldset>
+            <div class="button-group">
+                <button id="start-button" data-i18n="startButton">Start Learning</button>
+                <button id="show-errors-button" data-i18n="showAllCardsButton">View All Cards</button>
+                <button id="settings-button" data-i18n="settingsButton">Settings</button>
+            </div>
+        </div>
+
+        <div id="card" style="display: none;">
+            <button id="star-button" class="star-button">☆</button>
+            <div id="question" class="question"></div>
+            <div id="progress-bar-container">
+                <div id="progress-bar"></div>
+                <div id="progress-text"></div>
+            </div>
+            <div id="remaining-cards" class="remaining-cards"></div>
+            <div class="answer-input-container">
+                <textarea id="answer-input" placeholder="" autocomplete="off" rows="1"></textarea>
+                <div id="answer-hint" data-i18n="answerPlaceholder">Type answer and press Enter</div>
+            </div>
+            <div id="feedback"></div>
+            <div class="auto-advance-option">
+                <input type="checkbox" id="auto-advance-checkbox">
+                <label for="auto-advance-checkbox" data-i18n="autoAdvanceLabel">Auto-advance to next question</label>
+            </div>
+            <div class="button-group">
+                <button id="redo-button" style="display: none;" data-i18n="redoButton">Practice Again</button>
+                <button id="continue-button" style="display: none;" data-i18n="continueButton">Continue</button>
+                <button id="suspend-button" style="display: none;" data-i18n="suspendButton">Known</button>
+                <button id="skip-button" data-i18n="skipButton">Skip</button>
+                <button id="edit-card-button" data-i18n="editButtonLabel">Edit</button>
+                <button id="finish-round-button" data-i18n="finishRoundButton">Finish Round & Exit</button>
+                <button id="terminate-button" data-i18n="terminateButton">End Test</button>
+            </div>
+        </div>
+
+        <div id="summary" style="display: none;">
+            <h2 data-i18n="summaryHeading">Session Finished!</h2>
+            <p><span data-i18n="correctLabel">Correct</span>: <span id="correct-count">0</span></p>
+            <p><span data-i18n="incorrectLabel">Incorrect</span>: <span id="incorrect-count">0</span></p>
+
+            <div id="incorrect-words-container" style="display: none;">
+                <h3 data-i18n="incorrectWordsHeading">Incorrect words this session</h3>
+                <div id="incorrect-words-list"></div>
+            </div>
+
+            <button id="restart-button" data-i18n="restartButton">Return to Main Menu</button>
+        </div>
+    </div>
+
+    <footer id="last-updated"></footer>
+
+    <div id="error-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-button">&times;</span>
+            <h2 data-i18n="allCardsModalHeading">All Cards Status</h2>
+            <div id="modal-incorrect-list"></div>
+        </div>
+    </div>
+
+    <div id="edit-card-modal" class="modal">
+        <div class="modal-content edit-card-modal-content">
+            <span class="close-button">&times;</span>
+            <h2 data-i18n="editCardModalHeading">Edit Card</h2>
+            <div class="edit-card-form">
+                <div class="edit-form-group">
+                    <label for="edit-question-input" data-i18n="editQuestionLabel">Question</label>
+                    <textarea id="edit-question-input" class="edit-input" rows="3"></textarea>
+                </div>
+                <div class="edit-form-group">
+                    <label for="edit-answers-input" data-i18n="editAnswersLabel">Answers (separated by |)</label>
+                    <textarea id="edit-answers-input" class="edit-input" rows="3"></textarea>
+                </div>
+            </div>
+            <div class="modal-button-group">
+                <button id="cancel-edit-button" data-i18n="cancelButton">Cancel</button>
+                <button id="save-edit-button" data-i18n="saveButton">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="settings-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-button">&times;</span>
+            <h2 data-i18n="settingsModalHeading">Algorithm Parameters</h2>
+            <div class="settings-form">
+                <div class="settings-form-group">
+                    <label for="required-streak-input" data-i18n="requiredStreakLabel">Required Streak</label>
+                    <div class="input-group">
+                        <input type="number" id="required-streak-input" value="2" min="1">
+                    </div>
+                </div>
+                <div class="settings-form-group">
+                    <label for="penalty-input" data-i18n="penaltyLabel">Incorrect Penalty</label>
+                    <div class="input-group">
+                        <input type="number" id="penalty-input" value="2" min="0">
+                    </div>
+                </div>
+                <div class="settings-form-group">
+                    <label for="setting-initial-interval-value" data-i18n="initialIntervalLabel">Interval after 1st correct</label>
+                    <div class="input-group">
+                        <input type="number" id="setting-initial-interval-value" min="1">
+                        <select id="setting-initial-interval-unit">
+                            <option value="minutes" data-i18n="minutes">Minutes</option>
+                            <option value="hours" data-i18n="hours">Hours</option>
+                            <option value="days" data-i18n="days">Days</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="settings-form-group">
+                    <label for="setting-second-interval-value" data-i18n="secondIntervalLabel">Interval after 2nd correct</label>
+                    <div class="input-group">
+                        <input type="number" id="setting-second-interval-value" min="1">
+                        <select id="setting-second-interval-unit">
+                            <option value="minutes" data-i18n="minutes">Minutes</option>
+                            <option value="hours" data-i18n="hours">Hours</option>
+                            <option value="days" data-i18n="days">Days</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="settings-form-group">
+                    <label for="setting-lapse-interval-value" data-i18n="lapseIntervalLabel">Interval after incorrect</label>
+                    <div class="input-group">
+                        <input type="number" id="setting-lapse-interval-value" min="1">
+                        <select id="setting-lapse-interval-unit">
+                            <option value="minutes" data-i18n="minutes">Minutes</option>
+                            <option value="hours" data-i18n="hours">Hours</option>
+                            <option value="days" data-i18n="days">Days</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-button-group">
+                <button id="reset-settings-button" data-i18n="resetButton">Reset to Defaults</button>
+                <button id="save-settings-button" data-i18n="saveButton">Save</button>
+            </div>
+            <div class="settings-backup-zone">
+                <h3 data-i18n="backupHeading">Backup & Restore</h3>
+                <div class="backup-buttons">
+                    <button id="export-database-button" data-i18n="exportDatabaseButton">Export Database</button>
+                    <button id="import-database-button" data-i18n="importDatabaseButton">Import Database</button>
+                    <input type="file" id="import-database-input" accept=".sqlite,.db" style="display: none;">
+                </div>
+            </div>
+            <div class="settings-danger-zone">
+                <h3 data-i18n="dangerZoneHeading">Danger Zone</h3>
+                <button id="clear-cache-button" data-i18n="clearCacheButton">Clear All Local Data</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="history-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-button">&times;</span>
+            <h2 data-i18n="reviewHistoryHeading">Review History</h2>
+            <div id="history-card-info" style="margin-bottom: 15px; font-weight: bold;"></div>
+            <div id="history-list-container" style="overflow-y: auto; flex-grow: 1;">
+                <div id="history-list"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="lib/sql.js/sql-wasm.js"></script>
+    <script type="module" src="script.js"></script>
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/service-worker.js')
+                .then(registration => console.log('Service Worker registered'))
+                .catch(error => console.log('Service Worker registration failed:', error));
+        }
+    </script>
+</body>
+</html>
